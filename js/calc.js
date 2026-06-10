@@ -28,6 +28,16 @@ export function commission(contract, p) {
   return (Number(contract.value) * p.pct / 100) + p.fixed;
 }
 
+/** Total já recebido de um contrato */
+export function totalReceived(contract) {
+  return (contract.receipts || []).reduce((s, r) => s + Number(r.value), 0);
+}
+
+/** Valor ainda a receber de um contrato */
+export function toReceive(contract, p) {
+  return Math.max(0, commission(contract, p) - totalReceived(contract));
+}
+
 /** Totaliza fixas + dívidas do diagnóstico */
 export function monthlyCost(diagnosis) {
   const fixas   = (diagnosis?.fixas   || []).reduce((s,f) => s + Number(f.value), 0);
@@ -56,14 +66,21 @@ export function planMonth(income, costTotal, saldoReserva, reserveMeta) {
   return { toReserve, toGoals, toFree: free - toGoals, deficit: 0 };
 }
 
-/** Contratos fechados com início no mês ym */
+/** Contratos fechados com início no mês ym (para exibição) */
 export function contractsOfMonth(list, ym) {
   return list.filter(c => c.status === 'closed' && c.startDate?.slice(0,7) === ym);
 }
 
-/** Total de comissões do mês */
-export function incomeOfMonth(list, p, ym) {
-  return contractsOfMonth(list, ym).reduce((s,c) => s + commission(c, p), 0);
+/**
+ * Renda real do mês = soma dos recebimentos registrados naquele mês
+ * (em qualquer contrato fechado). Não usa mais a comissão cheia.
+ */
+export function incomeOfMonth(list, _p, ym) {
+  return list
+    .filter(c => c.status === 'closed')
+    .flatMap(c => c.receipts || [])
+    .filter(r => r.date?.slice(0, 7) === ym)
+    .reduce((s, r) => s + Number(r.value), 0);
 }
 
 /** Soma de transações */

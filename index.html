@@ -426,6 +426,33 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Registrar recebimento
+════════════════════════════════════════════════════════════ -->
+<div id="modal-rcpt" class="modal-bg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar recebimento</div>
+    <div class="modal-body">
+      <div style="background:var(--bg-raise);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:4px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:2px">Contrato</div>
+        <div id="rcpt-contract-name" style="font-size:.9rem;font-weight:600"></div>
+        <div id="rcpt-remaining" style="font-size:.78rem;color:var(--warn);margin-top:3px;font-family:'Space Grotesk',sans-serif"></div>
+      </div>
+      <div class="field">
+        <label>Valor recebido</label>
+        <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="rcpt-val" placeholder="0,00" min=".01" step=".01" inputmode="decimal"/></div>
+      </div>
+      <div class="field"><label>Data do recebimento</label><input type="date" id="rcpt-date"/></div>
+      <div class="field"><label>Observação (opcional)</label><input type="text" id="rcpt-note" placeholder="Ex: Parcela 1 de 2" maxlength="60"/></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-rcpt-save" class="btn btn-primary">Confirmar recebimento</button>
+      <button id="btn-rcpt-cancel" class="btn btn-ghost">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- CDNs + entry point -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script type="module" src="js/main.js"></script>

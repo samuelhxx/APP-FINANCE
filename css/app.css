@@ -1281,3 +1281,23 @@ body {
     max-width: 440px;
   }
 }
+
+/* ============================================================
+   RECEIPT PROGRESS BAR (inside contract cards)
+   ============================================================ */
+.rcpt-track {
+  height: 5px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.rcpt-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .5s cubic-bezier(.4, 0, .2, 1);
+}
+
+.rcpt-fill.rcpt-teal    { background: var(--teal); }
+.rcpt-fill.rcpt-warn    { background: var(--warn); }
+.rcpt-fill.rcpt-neutral { background: var(--txt3); width: 0 !important; }
