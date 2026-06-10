@@ -1,130 +1,101 @@
 /**
  * storage.js — localStorage CRUD + schema migration
- * Schema version: 2 (renda variável + contratos)
+ * Schema version: 3
  */
 
-const SCHEMA_VERSION = 2;
+export const SCHEMA_V = 3;
 
 const KEYS = {
-  VERSION:   'fc_schema_version',
-  DIAGNOSIS: 'fc_diagnosis',
+  VER:       'fc_ver',
+  DIAG:      'fc_diag',
   PARAMS:    'fc_params',
   CONTRACTS: 'fc_contracts',
-  TX:        (ym) => `fc_tx_${ym}`,
-  RESERVE:   'fc_reserve',       // { saldo: number, historico: [{ym, delta, motivo}] }
+  RESERVE:   'fc_reserve',
   GOALS:     'fc_goals',
+  TX:        (ym) => `fc_tx_${ym}`,
 };
 
-function get(key, def = null) {
-  try {
-    const v = localStorage.getItem(key);
-    return v !== null ? JSON.parse(v) : def;
-  } catch { return def; }
+// ── Core ──────────────────────────────────────────────────────
+export function get(key, def = null) {
+  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; }
+  catch { return def; }
+}
+export function set(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); }
+}
+export function del(key) { localStorage.removeItem(key); }
+export function clearAll() {
+  Object.keys(localStorage).filter(k => k.startsWith('fc_')).forEach(k => localStorage.removeItem(k));
 }
 
-function set(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.error('storage.set', e); }
-}
-
-function remove(key) { localStorage.removeItem(key); }
-
-function clearAll() {
-  Object.keys(localStorage)
-    .filter(k => k.startsWith('fc_'))
-    .forEach(k => localStorage.removeItem(k));
-}
-
-/** Run once on app init — migrate old schemas if needed. */
-function migrate() {
-  const v = get(KEYS.VERSION, 0);
-  if (v === SCHEMA_VERSION) return;
-
-  if (v < 2) {
-    // v1 → v2: remove old keys, start fresh (breaking change — variable income model)
-    Object.keys(localStorage).filter(k => k.startsWith('fc_')).forEach(k => localStorage.removeItem(k));
+// ── Migration ─────────────────────────────────────────────────
+export function migrate() {
+  const v = get(KEYS.VER, 0);
+  if (v < SCHEMA_V) {
+    // breaking change — wipe old data
+    clearAll();
+    set(KEYS.VER, SCHEMA_V);
   }
-
-  set(KEYS.VERSION, SCHEMA_VERSION);
 }
 
 // ── Default params ────────────────────────────────────────────
-const DEFAULT_PARAMS = {
-  commission_pct:   5,      // % do valor do contrato
-  commission_fixed: 2000,   // R$ fixo por contrato fechado
-  reserve_months:   6,      // meta de meses de reserva
+const DEF_PARAMS = { pct: 5, fixed: 2000, reserveMonths: 6 };
+
+export const params = {
+  get: ()  => ({ ...DEF_PARAMS, ...get(KEYS.PARAMS, {}) }),
+  set: (p) => set(KEYS.PARAMS, p),
 };
 
-function getParams() {
-  return { ...DEFAULT_PARAMS, ...get(KEYS.PARAMS, {}) };
-}
-
-function setParams(p) { set(KEYS.PARAMS, p); }
-
 // ── Diagnosis ─────────────────────────────────────────────────
-function getDiagnosis() { return get(KEYS.DIAGNOSIS, null); }
-function setDiagnosis(d) { set(KEYS.DIAGNOSIS, d); }
+export const diag = {
+  get: ()  => get(KEYS.DIAG, null),
+  set: (d) => set(KEYS.DIAG, d),
+};
 
 // ── Contracts ─────────────────────────────────────────────────
-function getContracts() { return get(KEYS.CONTRACTS, []); }
-function setContracts(arr) { set(KEYS.CONTRACTS, arr); }
-
-function upsertContract(contract) {
-  const list = getContracts();
-  const idx  = list.findIndex(c => c.id === contract.id);
-  if (idx >= 0) list[idx] = contract;
-  else list.push(contract);
-  setContracts(list);
-}
-
-function removeContract(id) {
-  setContracts(getContracts().filter(c => c.id !== id));
-}
-
-// ── Transactions ──────────────────────────────────────────────
-function getTx(ym) { return get(KEYS.TX(ym), []); }
-
-function addTx(tx) {
-  const ym  = tx.data.slice(0, 7);
-  const txs = getTx(ym);
-  txs.push(tx);
-  set(KEYS.TX(ym), txs);
-}
-
-function removeTx(id, ym) {
-  const txs = getTx(ym).filter(t => String(t.id) !== String(id));
-  set(KEYS.TX(ym), txs);
-}
+export const contracts = {
+  get: ()    => get(KEYS.CONTRACTS, []),
+  set: (arr) => set(KEYS.CONTRACTS, arr),
+  upsert(c) {
+    const list = this.get();
+    const i = list.findIndex(x => x.id === c.id);
+    if (i >= 0) list[i] = c; else list.push(c);
+    this.set(list);
+  },
+  remove(id) { this.set(this.get().filter(c => c.id !== id)); },
+};
 
 // ── Reserve ───────────────────────────────────────────────────
-function getReserve() {
-  return get(KEYS.RESERVE, { saldo: 0, historico: [] });
-}
+const DEF_RESERVE = { saldo: 0, log: [] };
 
-function updateReserve(delta, motivo, ym) {
-  const r   = getReserve();
-  r.saldo   = Math.max(0, r.saldo + delta);
-  r.historico.push({ ym, delta, motivo, ts: Date.now() });
-  set(KEYS.RESERVE, r);
-  return r.saldo;
-}
+export const reserve = {
+  get: ()    => get(KEYS.RESERVE, DEF_RESERVE),
+  set: (r)   => set(KEYS.RESERVE, r),
+  setSaldo(n) {
+    const r = this.get();
+    r.saldo = Math.max(0, n);
+    this.set(r);
+  },
+  adjust(delta, label, ym) {
+    const r = this.get();
+    r.saldo = Math.max(0, r.saldo + delta);
+    r.log.push({ ym, delta, label, ts: Date.now() });
+    this.set(r);
+    return r.saldo;
+  },
+};
 
-function setReserveSaldo(saldo) {
-  const r = getReserve();
-  r.saldo = Math.max(0, saldo);
-  set(KEYS.RESERVE, r);
-}
-
-// ── Goals ─────────────────────────────────────────────────────
-function getGoals() { return get(KEYS.GOALS, []); }
-function setGoals(arr) { set(KEYS.GOALS, arr); }
-
-export {
-  KEYS, migrate,
-  getParams, setParams,
-  getDiagnosis, setDiagnosis,
-  getContracts, setContracts, upsertContract, removeContract,
-  getTx, addTx, removeTx,
-  getReserve, updateReserve, setReserveSaldo,
-  getGoals, setGoals,
-  get, set, remove, clearAll,
+// ── Transactions ──────────────────────────────────────────────
+export const tx = {
+  get: (ym)  => get(KEYS.TX(ym), []),
+  set: (ym, arr) => set(KEYS.TX(ym), arr),
+  add(t) {
+    const ym = t.date.slice(0, 7);
+    const list = this.get(ym);
+    list.push(t);
+    this.set(ym, list);
+  },
+  remove(id, ym) {
+    this.set(ym, this.get(ym).filter(t => String(t.id) !== String(id)));
+  },
 };

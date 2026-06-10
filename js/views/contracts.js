@@ -1,177 +1,130 @@
 /**
- * contracts.js — módulo de contratos/obras
+ * contracts.js — contract CRUD + commission display
  */
-import { getContracts, upsertContract, removeContract, getParams } from '../storage.js';
-import { calcComissao, fmtBRL, ymLabel, uid } from '../calc.js';
+import { contracts as store, params as paramsStore } from '../storage.js';
+import { commission, fmt, ymLabel, uid } from '../calc.js';
+import { refresh } from '../router.js';
 
-let onChanged = null;
+let _onChanged = null;
 
-export function initContracts(changedCb) {
-  onChanged = changedCb;
-  document.getElementById('btn-new-contract')
-    ?.addEventListener('click', () => openContractModal(null));
-  document.getElementById('contract-modal-backdrop')
-    ?.addEventListener('click', e => { if (e.target === e.currentTarget) closeContractModal(); });
-  document.getElementById('btn-contract-cancel')
-    ?.addEventListener('click', closeContractModal);
-  document.getElementById('btn-contract-save')
-    ?.addEventListener('click', saveContract);
+export function initContracts(onChanged) {
+  _onChanged = onChanged;
+  document.getElementById('btn-new-ct')?.addEventListener('click', () => openModal(null));
+  const bg = document.getElementById('modal-ct');
+  bg?.addEventListener('click', e => { if (e.target === bg) closeModal(); });
+  document.getElementById('btn-ct-cancel')?.addEventListener('click', closeModal);
+  document.getElementById('btn-ct-save')?.addEventListener('click', save);
+  document.getElementById('ct-status')?.addEventListener('change', toggleDate);
 }
 
 export function renderContracts() {
-  const contracts = getContracts();
-  const params    = getParams();
-  const list      = document.getElementById('contracts-list');
+  const list = store.get();
+  const p    = paramsStore.get();
+  const el   = document.getElementById('contracts-list');
 
-  if (contracts.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        </div>
-        <div class="empty-title">Nenhum contrato cadastrado</div>
-        <div class="empty-sub">Adicione uma obra para calcular a comissão e registrar a renda.</div>
-      </div>`;
-    return;
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">
+      <div class="empty-ico">${ICONS.doc}</div>
+      <div class="empty-title">Nenhum contrato cadastrado</div>
+      <div class="empty-sub">Adicione uma obra para calcular a comissão e registrar a renda.</div>
+    </div>`; return;
   }
 
-  // separar negociação / fechados
-  const emNeg   = contracts.filter(c => c.status === 'negociacao');
-  const fechados = contracts.filter(c => c.status === 'fechado').sort((a,b) => (b.data_inicio||'').localeCompare(a.data_inicio||''));
+  const closed  = list.filter(c => c.status==='closed').sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
+  const pending = list.filter(c => c.status==='pending');
 
   let html = '';
+  if (closed.length)  { html += `<div class="sh">Contratos fechados</div>`;  html += closed.map(c=>card(c,p)).join(''); }
+  if (pending.length) { html += `<div class="sh">Em negociação</div>`;        html += pending.map(c=>card(c,p)).join(''); }
 
-  if (fechados.length) {
-    html += `<div class="section-head">Contratos fechados</div>`;
-    html += fechados.map(c => contractCard(c, params)).join('');
-  }
+  el.innerHTML = html;
 
-  if (emNeg.length) {
-    html += `<div class="section-head">Em negociação</div>`;
-    html += emNeg.map(c => contractCard(c, params)).join('');
-  }
-
-  list.innerHTML = html;
-
-  // eventos de editar / remover
-  list.querySelectorAll('.btn-edit-contract').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      openContractModal(contracts.find(c => c.id === id));
-    });
-  });
-  list.querySelectorAll('.btn-del-contract').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (confirm('Remover este contrato?')) {
-        removeContract(btn.dataset.id);
-        renderContracts();
-        if (onChanged) onChanged();
-      }
-    });
-  });
+  el.querySelectorAll('.btn-ct-edit').forEach(b => b.addEventListener('click', () => openModal(list.find(c=>c.id===b.dataset.id))));
+  el.querySelectorAll('.btn-ct-del') .forEach(b => b.addEventListener('click', () => { if(confirm('Remover contrato?')) { store.remove(b.dataset.id); renderContracts(); _onChanged?.(); } }));
 }
 
-function contractCard(c, params) {
-  const comissao  = calcComissao(c, params);
-  const isFechado = c.status === 'fechado';
-  const mesLabel  = c.data_inicio ? ymLabel(c.data_inicio.slice(0,7), { month: 'short', year: 'numeric' }) : '—';
-
-  return `
-    <div class="contract-card">
-      <div class="contract-header">
-        <div>
-          <div class="contract-name">${escHtml(c.nome)}</div>
-          <div class="contract-meta">${isFechado ? `Início: ${mesLabel}` : 'Aguardando fechamento'}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="contract-value num">${fmtBRL(c.valor)}</div>
-          <div style="margin-top:4px">
-            <span class="badge ${isFechado ? 'badge-teal' : 'badge-neutral'}">
-              <span class="badge-dot"></span>
-              ${isFechado ? 'Fechado' : 'Em negociação'}
-            </span>
-          </div>
+function card(c, p) {
+  const com  = commission(c, p);
+  const isCl = c.status === 'closed';
+  const mon  = c.startDate ? ymLabel(c.startDate.slice(0,7), {month:'short',year:'numeric'}) : '—';
+  return `<div class="contract-card">
+    <div class="cc-header">
+      <div>
+        <div class="cc-name">${esc(c.name)}</div>
+        <div class="cc-meta">${isCl ? `Início: ${mon}` : 'Aguardando fechamento'}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="cc-val num">${fmt(c.value)}</div>
+        <div style="margin-top:4px">
+          <span class="badge ${isCl?'bdg-teal':'bdg-neutral'}">
+            <span class="bdg-dot"></span>
+            ${isCl?'Fechado':'Em negociação'}
+          </span>
         </div>
       </div>
-      <div class="contract-commission">
-        <div>
-          <div class="commission-label">Comissão ${c.comissao_override ? '(personalizada)' : `(${params.commission_pct}% + R$ ${params.commission_fixed.toLocaleString('pt-BR')})`}</div>
-          ${!isFechado ? `<div class="contract-pending-note">Não conta como renda até fechar</div>` : ''}
+    </div>
+    <div class="cc-commission">
+      <div>
+        <div class="cc-comm-lbl">
+          Comissão ${c.override!=null && c.override!=='' ? '(personalizada)' : `(${p.pct}% + R$${p.fixed.toLocaleString('pt-BR')})`}
         </div>
-        <div class="commission-value num">${fmtBRL(comissao)}</div>
+        ${!isCl?`<div class="cc-pending">Não conta como renda até fechar</div>`:''}
       </div>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn btn-ghost btn-sm btn-edit-contract" data-id="${c.id}" style="flex:1">Editar</button>
-        <button class="btn btn-danger-ghost btn-sm btn-del-contract" data-id="${c.id}">Remover</button>
-      </div>
-    </div>`;
+      <div class="cc-comm-val num">${fmt(com)}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-ghost btn-sm btn-ct-edit" data-id="${c.id}" style="flex:1">Editar</button>
+      <button class="btn btn-danger btn-sm btn-ct-del"  data-id="${c.id}">Remover</button>
+    </div>
+  </div>`;
 }
 
 // ── Modal ──────────────────────────────────────────────────────
-function openContractModal(contract) {
-  const title = document.getElementById('contract-modal-title');
-  title.textContent = contract ? 'Editar contrato' : 'Novo contrato';
-
-  const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
-  f('contract-id',       contract?.id || uid());
-  f('contract-nome',     contract?.nome || '');
-  f('contract-valor',    contract?.valor || '');
-  f('contract-status',   contract?.status || 'negociacao');
-  f('contract-data',     contract?.data_inicio || '');
-  f('contract-override', contract?.comissao_override ?? '');
-
-  toggleDataField();
-  document.getElementById('contract-modal-backdrop').classList.add('open');
-  document.getElementById('contract-nome')?.focus();
+function openModal(c) {
+  document.getElementById('ct-modal-title').textContent = c ? 'Editar contrato' : 'Novo contrato';
+  v('ct-id',       c?.id       || uid());
+  v('ct-name',     c?.name     || '');
+  v('ct-value',    c?.value    || '');
+  v('ct-status',   c?.status   || 'pending');
+  v('ct-date',     c?.startDate || '');
+  v('ct-override', c?.override != null ? c.override : '');
+  toggleDate();
+  document.getElementById('modal-ct').classList.add('open');
+  document.getElementById('ct-name')?.focus();
 }
 
-export function closeContractModal() {
-  document.getElementById('contract-modal-backdrop')?.classList.remove('open');
+function closeModal() { document.getElementById('modal-ct')?.classList.remove('open'); }
+
+function toggleDate() {
+  const wrap = document.getElementById('ct-date-wrap');
+  if (wrap) wrap.hidden = document.getElementById('ct-status').value !== 'closed';
 }
 
-function toggleDataField() {
-  const status = document.getElementById('contract-status')?.value;
-  const wrap   = document.getElementById('contract-data-wrap');
-  if (wrap) wrap.style.display = status === 'fechado' ? '' : 'none';
-}
+function save() {
+  const name  = document.getElementById('ct-name')?.value.trim();
+  const val   = parseFloat(document.getElementById('ct-value')?.value);
+  if (!name) { shake('ct-name'); return; }
+  if (!val||val<=0) { shake('ct-value'); return; }
+  const status = document.getElementById('ct-status').value;
+  const date   = document.getElementById('ct-date').value;
+  if (status==='closed'&&!date) { shake('ct-date'); return; }
 
-// hook status change inside modal
-document.addEventListener('change', e => {
-  if (e.target.id === 'contract-status') toggleDataField();
-});
-
-function saveContract() {
-  const nome  = document.getElementById('contract-nome')?.value.trim();
-  const valor = parseFloat(document.getElementById('contract-valor')?.value);
-  if (!nome) { markError('contract-nome'); return; }
-  if (!valor || valor <= 0) { markError('contract-valor'); return; }
-
-  const status  = document.getElementById('contract-status').value;
-  const dataEl  = document.getElementById('contract-data').value;
-  if (status === 'fechado' && !dataEl) { markError('contract-data'); return; }
-
-  const override = document.getElementById('contract-override')?.value;
-
-  const contract = {
-    id:                 document.getElementById('contract-id').value,
-    nome, valor, status,
-    data_inicio:        status === 'fechado' ? dataEl : null,
-    comissao_override:  override !== '' ? parseFloat(override) : null,
-  };
-
-  upsertContract(contract);
-  closeContractModal();
+  store.upsert({
+    id:        document.getElementById('ct-id').value,
+    name, value: val, status,
+    startDate: status==='closed' ? date : null,
+    override:  document.getElementById('ct-override').value !== '' ? parseFloat(document.getElementById('ct-override').value) : null,
+  });
+  closeModal();
   renderContracts();
-  if (onChanged) onChanged();
+  _onChanged?.();
 }
 
-function markError(id) {
-  const el = document.getElementById(id);
-  el?.classList.add('error');
-  el?.focus();
-  setTimeout(() => el?.classList.remove('error'), 2000);
-}
+// ── Util ──────────────────────────────────────────────────────
+function v(id, val) { const e=document.getElementById(id); if(e) e.value=val??''; }
+function shake(id) { const e=document.getElementById(id); e?.classList.add('err'); e?.focus(); setTimeout(()=>e?.classList.remove('err'),2000); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+const ICONS = {
+  doc: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+};

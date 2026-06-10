@@ -1,22 +1,19 @@
 /**
- * diagnosis.js — onboarding em 6 passos
+ * diagnosis.js — 6-step onboarding flow
  */
-import { setDiagnosis, setReserveSaldo, getParams } from '../storage.js';
-import { calcCustoMensal, fmtBRL } from '../calc.js';
+import { diag, reserve as resStore, params } from '../storage.js';
+import { monthlyCost, fmt, uid } from '../calc.js';
+import { navigate } from '../router.js';
 
-const TOTAL_STEPS = 6;
+const TOTAL = 6;
 let step = 1;
-let onComplete = null; // callback(diagnosis)
 
-export function initDiagnosis(completeCb) {
-  onComplete = completeCb;
-
-  document.getElementById('btn-diag-next').addEventListener('click', handleNext);
-  document.getElementById('btn-diag-prev').addEventListener('click', handlePrev);
-  document.getElementById('btn-add-fixa').addEventListener('click', () => addDynRow('fixas-list', fixaRow));
-  document.getElementById('btn-add-divida').addEventListener('click', () => addDynRow('dividas-list', dividaRow));
-
-  renderStep();
+export function initDiagnosis() {
+  q('btn-next').addEventListener('click', next);
+  q('btn-prev').addEventListener('click', prev);
+  q('btn-add-fixa').addEventListener('click', () => addRow('fixas-list', fixaRow));
+  q('btn-add-debt').addEventListener('click',  () => addRow('debts-list', debtRow));
+  q('meta-months').addEventListener('input', updateMetaPreview);
 }
 
 export function startDiagnosis() {
@@ -24,151 +21,121 @@ export function startDiagnosis() {
   renderStep();
 }
 
-function renderStep() {
-  document.querySelectorAll('.diag-step').forEach(s => s.classList.remove('active'));
-  document.getElementById(`diag-step-${step}`)?.classList.add('active');
-
-  const pct = (step / TOTAL_STEPS) * 100;
-  document.getElementById('diag-progress-fill').style.width = `${pct}%`;
-  document.getElementById('diag-step-label').textContent = `Etapa ${step} de ${TOTAL_STEPS}`;
-
-  const prevBtn = document.getElementById('btn-diag-prev');
-  prevBtn.style.display = step === 1 ? 'none' : '';
-
-  const nextBtn = document.getElementById('btn-diag-next');
-  nextBtn.textContent = step === TOTAL_STEPS ? 'Gerar plano' : 'Continuar';
-
-  // step 5: atualiza cálculo da meta em tempo real
-  if (step === 5) updateMetaPreview();
-}
-
-function handleNext() {
+function next() {
   if (!validate()) return;
-  if (step < TOTAL_STEPS) { step++; renderStep(); }
+  if (step < TOTAL) { step++; renderStep(); }
   else finish();
 }
 
-function handlePrev() {
-  if (step > 1) { step--; renderStep(); }
+function prev() { if (step > 1) { step--; renderStep(); } }
+
+function renderStep() {
+  document.querySelectorAll('.diag-step').forEach(s => s.classList.remove('active'));
+  q(`step-${step}`)?.classList.add('active');
+  q('prog-fill').style.width = `${step/TOTAL*100}%`;
+  q('prog-lbl').textContent  = `Etapa ${step} de ${TOTAL}`;
+  q('btn-prev').style.display = step === 1 ? 'none' : '';
+  q('btn-next').textContent   = step === TOTAL ? 'Gerar plano' : 'Continuar';
+  if (step === 5) updateMetaPreview();
 }
 
-// ── Validation ────────────────────────────────────────────────
 function validate() {
   if (step === 1) {
-    const v = parseFloat(document.getElementById('media-renda').value);
-    if (!v || v <= 0) { markError('media-renda'); return false; }
+    const v = parseFloat(q('avg-income').value);
+    if (!v || v <= 0) { err('avg-income'); return false; }
   }
   if (step === 4) {
-    const v = parseFloat(document.getElementById('reserva-atual').value);
-    if (isNaN(v) || v < 0) { markError('reserva-atual'); return false; }
+    const v = parseFloat(q('reserve-now').value);
+    if (isNaN(v) || v < 0) { err('reserve-now'); return false; }
   }
   if (step === 5) {
-    const m = parseInt(document.getElementById('meta-meses').value);
-    if (!m || m < 1 || m > 36) { markError('meta-meses'); return false; }
+    const v = parseInt(q('meta-months').value);
+    if (!v || v < 1) { err('meta-months'); return false; }
   }
   return true;
 }
 
-function markError(id) {
-  const el = document.getElementById(id);
-  el?.classList.add('error');
-  el?.focus();
-  setTimeout(() => el?.classList.remove('error'), 2000);
-}
-
 // ── Dynamic rows ──────────────────────────────────────────────
 function fixaRow() {
-  return `
-    <div class="dyn-item-body">
-      <input placeholder="Nome (ex: Aluguel)" class="fixa-nome" maxlength="50" />
-      <div class="dyn-item-row">
-        <input type="number" placeholder="Valor R$" class="fixa-valor" min="0" step="0.01" inputmode="decimal" />
-        <input type="number" placeholder="Dia venc." class="fixa-dia" min="1" max="31" style="max-width:80px" inputmode="numeric" />
-      </div>
-    </div>`;
+  return `<div class="dyn-body">
+    <input placeholder="Nome (ex: Aluguel)" class="fixa-name" maxlength="50"/>
+    <div class="dyn-row">
+      <input type="number" placeholder="Valor R$" class="fixa-val" min="0" step=".01" inputmode="decimal"/>
+      <input type="number" placeholder="Dia venc." class="fixa-day" min="1" max="31" style="max-width:80px" inputmode="numeric"/>
+    </div>
+  </div>`;
 }
 
-function dividaRow() {
-  return `
-    <div class="dyn-item-body">
-      <input placeholder="Nome (ex: Cartão Nubank)" class="div-nome" maxlength="50" />
-      <div class="dyn-item-row">
-        <input type="number" placeholder="Parcela R$" class="div-parcela" min="0" step="0.01" inputmode="decimal" />
-        <input type="number" placeholder="Saldo total R$" class="div-saldo" min="0" step="0.01" inputmode="decimal" />
-      </div>
-    </div>`;
+function debtRow() {
+  return `<div class="dyn-body">
+    <input placeholder="Nome (ex: Cartão Nubank)" class="debt-name" maxlength="50"/>
+    <div class="dyn-row">
+      <input type="number" placeholder="Parcela R$" class="debt-inst" min="0" step=".01" inputmode="decimal"/>
+      <input type="number" placeholder="Saldo R$" class="debt-bal" min="0" step=".01" inputmode="decimal"/>
+    </div>
+  </div>`;
 }
 
-function addDynRow(listId, templateFn) {
+function addRow(listId, tplFn) {
   const list = document.getElementById(listId);
   const div  = document.createElement('div');
   div.className = 'dyn-item';
-  div.innerHTML = templateFn() + removeBtn();
-  div.querySelector('.dyn-remove').addEventListener('click', () => div.remove());
+  div.innerHTML = tplFn() + `<button class="dyn-rm" type="button" aria-label="Remover">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg></button>`;
+  div.querySelector('.dyn-rm').onclick = () => div.remove();
   list.appendChild(div);
   div.querySelector('input')?.focus();
 }
 
-function removeBtn() {
-  return `<button class="dyn-remove" type="button" title="Remover">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-  </button>`;
-}
-
-// ── Meta preview (step 5) ─────────────────────────────────────
 function updateMetaPreview() {
-  const meses = parseInt(document.getElementById('meta-meses').value) || 6;
-  const diag  = readPartialDiagnosis();
-  const { total } = calcCustoMensal(diag);
-  const alvo  = total * meses;
-  const preview = document.getElementById('meta-preview');
-  if (preview) {
-    preview.textContent = alvo > 0
-      ? `Meta de reserva: ${fmtBRL(alvo)} (${meses}× ${fmtBRL(total)}/mês)`
-      : `Informe suas contas fixas primeiro.`;
-  }
-  document.getElementById('meta-meses')
-    ?.addEventListener('input', () => {
-      const m2 = parseInt(document.getElementById('meta-meses').value) || 0;
-      const a2 = total * m2;
-      if (preview && a2 > 0) preview.textContent = `Meta de reserva: ${fmtBRL(a2)} (${m2}× ${fmtBRL(total)}/mês)`;
-    }, { once: true });
+  const m    = parseInt(q('meta-months').value) || 0;
+  const d    = readPartial();
+  const { total } = monthlyCost(d);
+  const el   = q('meta-preview');
+  if (el) el.textContent = total > 0 && m > 0
+    ? `Meta: ${fmt(total * m)} (${m}× ${fmt(total)}/mês)`
+    : '';
 }
 
-// ── Read form data ────────────────────────────────────────────
-function readPartialDiagnosis() {
+// ── Read form ─────────────────────────────────────────────────
+function readPartial() {
   const fixas = [...document.querySelectorAll('#fixas-list .dyn-item')].map(li => ({
-    nome:  li.querySelector('.fixa-nome')?.value.trim() || 'Conta',
-    valor: parseFloat(li.querySelector('.fixa-valor')?.value) || 0,
-    dia:   parseInt(li.querySelector('.fixa-dia')?.value) || 1,
-  })).filter(f => f.valor > 0);
+    id:    uid(),
+    name:  li.querySelector('.fixa-name')?.value.trim() || 'Conta',
+    value: parseFloat(li.querySelector('.fixa-val')?.value)  || 0,
+    day:   parseInt(li.querySelector('.fixa-day')?.value)    || 1,
+  })).filter(f => f.value > 0);
 
-  const dividas = [...document.querySelectorAll('#dividas-list .dyn-item')].map(li => ({
-    nome:    li.querySelector('.div-nome')?.value.trim() || 'Dívida',
-    parcela: parseFloat(li.querySelector('.div-parcela')?.value) || 0,
-    saldo:   parseFloat(li.querySelector('.div-saldo')?.value) || 0,
-  })).filter(d => d.parcela > 0);
+  const debts = [...document.querySelectorAll('#debts-list .dyn-item')].map(li => ({
+    id:          uid(),
+    name:        li.querySelector('.debt-name')?.value.trim() || 'Dívida',
+    installment: parseFloat(li.querySelector('.debt-inst')?.value) || 0,
+    balance:     parseFloat(li.querySelector('.debt-bal')?.value)  || 0,
+  })).filter(d => d.installment > 0);
 
-  return { fixas, dividas };
+  return { fixas, debts };
 }
 
 function finish() {
-  const partial  = readPartialDiagnosis();
-  const mediaRenda  = parseFloat(document.getElementById('media-renda').value) || 0;
-  const piorMes     = parseFloat(document.getElementById('pior-mes').value) || 0;
-  const reservaAtual = parseFloat(document.getElementById('reserva-atual').value) || 0;
-  const metaMeses   = parseInt(document.getElementById('meta-meses').value) || 6;
-  const objetivos   = [...document.querySelectorAll('#objetivos-list input:checked')].map(c => c.value);
+  const partial    = readPartial();
+  const avgIncome  = parseFloat(q('avg-income').value)   || 0;
+  const worstMonth = parseFloat(q('worst-month').value)  || 0;
+  const reserveNow = parseFloat(q('reserve-now').value)  || 0;
+  const metaMonths = parseInt(q('meta-months').value)    || 6;
+  const goals      = [...document.querySelectorAll('#goals-list input:checked')].map(c => c.value);
 
-  const diagnosis = {
-    ...partial,
-    mediaRenda, piorMes,
-    reservaAtual, metaMeses, objetivos,
-    criadoEm: new Date().toISOString(),
-  };
+  diag.set({ ...partial, avgIncome, worstMonth, metaMonths, goals, createdAt: new Date().toISOString() });
+  resStore.setSaldo(reserveNow);
+  navigate('reserve');
+}
 
-  setDiagnosis(diagnosis);
-  setReserveSaldo(reservaAtual);
-
-  if (onComplete) onComplete(diagnosis);
+// ── Helpers ───────────────────────────────────────────────────
+function q(id) { return document.getElementById(id); }
+function err(id) {
+  const el = document.getElementById(id);
+  el?.classList.add('err');
+  el?.focus();
+  setTimeout(() => el?.classList.remove('err'), 2000);
 }

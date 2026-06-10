@@ -1,166 +1,132 @@
 /**
- * month.js — visão mensal de gastos + histórico de reserva
+ * month.js — monthly view: stats + tx list + charts
  */
-import { getTx, removeTx, getContracts, getParams, getReserve } from '../storage.js';
-import { fmtBRL, ymNow, ymLabel, totalComissoesDoMes, sumTx, sumByCategory } from '../calc.js';
-import { CAT_ICONS } from './launch.js';
-import { renderReserveLine, renderMonthBar, renderCategoryDonut } from '../charts.js';
+import { tx as txStore, contracts as ctStore, params as paramsStore, reserve as resStore } from '../storage.js';
+import { fmt, ymNow, ymLabel, incomeOfMonth, sumTx, byCategory } from '../calc.js';
+import { CAT_ICON, CATS } from './launch.js';
+import { lineReserve, barHistory, donutCats, killAll } from '../charts.js';
 
-let activeYM    = ymNow();
-let onChanged   = null;
+let activeYM = ymNow();
+let _onChanged = null;
 
-export function initMonth(changedCb) {
-  onChanged = changedCb;
-}
+export function initMonth(onChanged) { _onChanged = onChanged; }
 
 export function renderMonth() {
-  activeYM = ymNow(); // always start on current month
-  buildMonthPills();
-  renderMonthData();
+  activeYM = ymNow();
+  buildPills();
+  renderData();
 }
 
-function buildMonthPills() {
+function buildPills() {
   const wrap = document.getElementById('month-pills');
+  if (!wrap) return;
   wrap.innerHTML = '';
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    const ym  = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const btn = document.createElement('button');
-    btn.className   = 'month-pill' + (ym === activeYM ? ' active' : '');
-    btn.textContent = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.','');
-    btn.dataset.ym  = ym;
-    btn.addEventListener('click', () => { activeYM = ym; buildMonthPills(); renderMonthData(); });
-    wrap.appendChild(btn);
-  }
-}
-
-function renderMonthData() {
-  const txs       = getTx(activeYM);
-  const contracts = getContracts();
-  const params    = getParams();
-
-  const totalEntrou = totalComissoesDoMes(contracts, params, activeYM);
-  const totalSaiu   = sumTx(txs);
-  const saldo       = totalEntrou - totalSaiu;
-
-  document.getElementById('month-entrou').textContent = fmtBRL(totalEntrou);
-  document.getElementById('month-saiu').textContent   = fmtBRL(totalSaiu);
-  const saldoEl = document.getElementById('month-saldo');
-  saldoEl.textContent = fmtBRL(saldo);
-  saldoEl.className   = `stat-val num ${saldo >= 0 ? 'positive' : 'negative'}`;
-
-  renderTxList(txs);
-  renderCategoryChart(txs);
-  renderHistoryCharts();
-}
-
-function renderTxList(txs) {
-  const list = document.getElementById('month-tx-list');
-  if (txs.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        </div>
-        <div class="empty-title">Nenhum lançamento</div>
-        <div class="empty-sub">Use o botão Lançar para registrar gastos.</div>
-      </div>`;
-    return;
-  }
-
-  const sorted = [...txs].sort((a,b) => b.data.localeCompare(a.data));
-  list.innerHTML = sorted.map(tx => {
-    const d   = new Date(tx.data + 'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'short' });
-    const ico = CAT_ICONS[tx.categoria] || CAT_ICONS.outros;
-    return `
-      <div class="tx-item">
-        <div class="tx-icon">${ico}</div>
-        <div class="tx-body">
-          <div class="tx-desc">${escHtml(tx.descricao)}</div>
-          <div class="tx-meta">${d} · ${catLabel(tx.categoria)}</div>
-        </div>
-        <div class="tx-amount">− ${fmtBRL(tx.valor)}</div>
-        <button class="tx-del" data-id="${tx.id}" data-ym="${tx.data.slice(0,7)}" title="Remover">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button>
-      </div>`;
-  }).join('');
-
-  list.querySelectorAll('.tx-del').forEach(btn => {
-    btn.addEventListener('click', () => {
-      removeTx(btn.dataset.id, btn.dataset.ym);
-      renderMonthData();
-      if (onChanged) onChanged();
-    });
-  });
-}
-
-function renderCategoryChart(txs) {
-  const catMap = sumByCategory(txs);
-  if (catMap.size === 0) {
-    document.getElementById('month-chart-wrap').innerHTML = `
-      <div class="empty-state" style="padding:24px">
-        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/></svg></div>
-        <div class="empty-sub">Sem gastos para exibir</div>
-      </div>`;
-    return;
-  }
-  // top 6
-  const sorted = [...catMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const labels = sorted.map(([k]) => catLabel(k));
-  const values = sorted.map(([,v]) => v);
-  document.getElementById('month-chart-wrap').innerHTML = `<canvas id="chart-donut"></canvas>`;
-  renderCategoryDonut('chart-donut', labels, values);
-}
-
-function renderHistoryCharts() {
-  const contracts = getContracts();
-  const params    = getParams();
-  const reserve   = getReserve();
-
-  const months = [], entrou = [], saiu = [], saldos = [];
   for (let i = 5; i >= 0; i--) {
     const d  = new Date();
     d.setMonth(d.getMonth() - i);
     const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    months.push(d.toLocaleDateString('pt-BR', { month:'short' }).replace('.',''));
-    entrou.push(totalComissoesDoMes(contracts, params, ym));
-    saiu.push(sumTx(getTx(ym)));
+    const b  = document.createElement('button');
+    b.className   = 'month-pill' + (ym === activeYM ? ' active' : '');
+    b.textContent = d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}).replace('.','');
+    b.dataset.ym  = ym;
+    b.addEventListener('click', () => { activeYM=ym; buildPills(); renderData(); });
+    wrap.appendChild(b);
   }
-
-  // reserva: reconstruir saldo mês a mês a partir do histórico
-  const hist = reserve.historico || [];
-  let saldoAcc = reserve.saldo;
-  // trabalhar de trás pra frente
-  const histByYM = {};
-  hist.forEach(h => { histByYM[h.ym] = (histByYM[h.ym] || 0) + h.delta; });
-  const allYMs = months.map((_,i) => {
-    const d = new Date(); d.setMonth(d.getMonth() - (5-i));
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-  });
-  // acumulado simples: usar saldo atual projetado para trás
-  let running = reserve.saldo;
-  const saldoArr = new Array(6);
-  for (let i = 5; i >= 0; i--) {
-    const ym = allYMs[i];
-    saldoArr[i] = running;
-    running -= (histByYM[ym] || 0);
-  }
-
-  renderMonthBar('chart-bar-history', months, entrou, saiu);
-  renderReserveLine('chart-reserve-line', months, saldoArr);
 }
 
-function catLabel(id) {
-  const map = {
-    mercado:'Mercado',moradia:'Moradia',transporte:'Transporte',
-    saude:'Saúde',educacao:'Educação',lazer:'Lazer',
-    reserva:'Reserva',outros:'Outros',
+function renderData() {
+  const txs = txStore.get(activeYM);
+  const p   = paramsStore.get();
+  const ct  = ctStore.get();
+
+  const inc  = incomeOfMonth(ct, p, activeYM);
+  const out  = sumTx(txs);
+  const bal  = inc - out;
+
+  const setEl = (id, text, cls='') => {
+    const e = document.getElementById(id);
+    if (e) { e.textContent=text; e.className=`stat-val num ${cls}`.trim(); }
   };
-  return map[id] || id;
+  setEl('m-income', fmt(inc), inc>0?'pos':'');
+  setEl('m-out',    fmt(out), out>0?'neg':'');
+  setEl('m-bal',    fmt(bal), bal>=0?'pos':'neg');
+
+  renderTxList(txs);
+  renderCharts(txs, ct, p);
 }
 
-function escHtml(str) {
-  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function renderTxList(txs) {
+  const el = document.getElementById('month-txs');
+  if (!el) return;
+  if (!txs.length) {
+    el.innerHTML = `<div class="empty" style="padding:32px 20px">
+      <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="empty-title">Nenhum lançamento</div>
+      <div class="empty-sub">Use o botão Lançar para registrar gastos.</div>
+    </div>`; return;
+  }
+
+  const sorted = [...txs].sort((a,b)=>b.date.localeCompare(a.date));
+  el.innerHTML = sorted.map(t => {
+    const d   = new Date(t.date+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    const ico = CAT_ICON[t.cat] || CAT_ICON.outros;
+    const lbl = CATS.find(c=>c.id===t.cat)?.label || t.cat;
+    return `<div class="tx-item">
+      <div class="tx-ico">${ico}</div>
+      <div class="tx-body">
+        <div class="tx-desc">${esc(t.desc)}</div>
+        <div class="tx-meta">${d} · ${lbl}</div>
+      </div>
+      <div class="tx-amt">− ${fmt(t.value)}</div>
+      <button class="tx-del" data-id="${t.id}" data-ym="${t.date.slice(0,7)}" title="Remover">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.tx-del').forEach(b => b.addEventListener('click', () => {
+    txStore.remove(b.dataset.id, b.dataset.ym);
+    renderData(); _onChanged?.();
+  }));
 }
+
+function renderCharts(txs, ct, p) {
+  // Donut
+  const catMap = byCategory(txs);
+  const catWrap = document.getElementById('month-donut-wrap');
+  if (!catMap || Object.keys(catMap).length === 0) {
+    if (catWrap) catWrap.innerHTML = `<div class="empty" style="padding:24px"><div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div><div class="empty-sub">Sem gastos para exibir</div></div>`;
+  } else {
+    const sorted = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    if (catWrap) catWrap.innerHTML = `<canvas id="chart-donut"></canvas>`;
+    donutCats('chart-donut', sorted.map(([k])=>CATS.find(c=>c.id===k)?.label||k), sorted.map(([,v])=>v));
+  }
+
+  // 6-month bar + line
+  const months=[], income=[], spent=[], saldos=[];
+  const reserve = resStore.get();
+  const histMap = {};
+  (reserve.log||[]).forEach(h => { histMap[h.ym]=(histMap[h.ym]||0)+h.delta; });
+
+  let running = reserve.saldo;
+  const yms = [];
+  for (let i=5;i>=0;i--) {
+    const d=new Date(); d.setMonth(d.getMonth()-i);
+    yms.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const saldoArr = new Array(6);
+  for (let i=5;i>=0;i--) { saldoArr[i]=running; running-=(histMap[yms[i]]||0); }
+
+  for (let i=0;i<6;i++) {
+    const d=new Date(); d.setMonth(d.getMonth()-(5-i));
+    months.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''));
+    income.push(incomeOfMonth(ct,p,yms[i]));
+    spent.push(sumTx(txStore.get(yms[i])));
+    saldos.push(saldoArr[i]);
+  }
+
+  barHistory('chart-bar-hist', months, income, spent);
+  lineReserve('chart-line-res', months, saldos);
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
