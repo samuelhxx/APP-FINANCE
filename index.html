@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="description" content="Controle financeiro do casal — diagnóstico, plano e acompanhamento mensal." />
+  <title>Controle Financeiro</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── SPLASH ─────────────────────────────────────────────── -->
+<div id="splash">
+  <div class="s-logo">💰</div>
+  <h1>Controle Financeiro</h1>
+  <p>Organização do casal</p>
+</div>
+
+<!-- ── APP ────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ════════════ VIEW: WELCOME ════════════ -->
+  <div id="view-welcome" class="view">
+    <div class="welcome-logo">💰</div>
+    <h1 class="welcome-title">Controle Financeiro</h1>
+    <p class="welcome-subtitle">Plano personalizado para o casal, feito com base na sua realidade.</p>
+
+    <div class="welcome-features">
+      <div class="feature-item"><span class="feature-icon">📋</span>Diagnóstico rápido do orçamento</div>
+      <div class="feature-item"><span class="feature-icon">📊</span>Plano gerado pelos seus números</div>
+      <div class="feature-item"><span class="feature-icon">✉️</span>Envelopes com alertas em tempo real</div>
+      <div class="feature-item"><span class="feature-icon">🎯</span>Acompanhamento de meta de poupança</div>
+    </div>
+
+    <button id="btn-start" class="btn btn-primary" style="max-width:320px;width:100%">
+      Começar diagnóstico →
+    </button>
+    <p class="text-muted" style="font-size:.78rem">Os dados ficam apenas no seu dispositivo.</p>
+  </div>
+
+  <!-- ════════════ VIEW: DIAGNOSIS ════════════ -->
+  <div id="view-diagnosis" class="view">
+    <div class="step-header container">
+      <div class="step-progress-bar"><div id="step-progress-fill" class="step-progress-fill" style="width:16.6%"></div></div>
+      <div id="step-label" class="step-label">Etapa 1 de 6</div>
+    </div>
+
+    <!-- STEP 1: Renda -->
+    <div id="step-1" class="step active container">
+      <h2 class="step-title">Qual é a renda mensal do casal?</h2>
+      <p class="step-desc">Some todos os salários, freelas e rendas fixas do mês.</p>
+      <div class="field">
+        <label>Renda total mensal</label>
+        <div class="input-prefix">
+          <span>R$</span>
+          <input type="number" id="renda" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
+        </div>
+        <span class="hint">Inclua salário, freelance, aluguel recebido, etc.</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: Contas fixas -->
+    <div id="step-2" class="step container">
+      <h2 class="step-title">Quais são as contas fixas?</h2>
+      <p class="step-desc">Adicione tudo que você paga todo mês: aluguel, luz, internet, escola…</p>
+      <div id="fixas-list" class="list-items"></div>
+      <button id="btn-add-fixa" class="add-item-btn">+ Adicionar conta fixa</button>
+    </div>
+
+    <!-- STEP 3: Dívidas -->
+    <div id="step-3" class="step container">
+      <h2 class="step-title">Têm dívidas no momento?</h2>
+      <p class="step-desc">Cartão de crédito parcelado, empréstimo, financiamento extra… Se não tiver, pode pular.</p>
+      <div id="dividas-list" class="list-items"></div>
+      <button id="btn-add-divida" class="add-item-btn">+ Adicionar dívida</button>
+    </div>
+
+    <!-- STEP 4: Meta -->
+    <div id="step-4" class="step container">
+      <h2 class="step-title">Qual é o objetivo de poupança?</h2>
+      <p class="step-desc">Uma meta concreta ajuda o app a calcular o valor mensal necessário.</p>
+      <div class="field">
+        <label>Nome do objetivo</label>
+        <input type="text" id="meta-nome" placeholder="Ex: Viagem para Europa" maxlength="50" />
+      </div>
+      <div class="field">
+        <label>Valor total da meta</label>
+        <div class="input-prefix"><span>R$</span>
+          <input type="number" id="meta-valor" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Em quantos meses querem atingir?</label>
+        <input type="number" id="meta-prazo" placeholder="Ex: 12" min="1" max="360" inputmode="numeric" />
+        <span class="hint">O app vai calcular quanto guardar por mês.</span>
+      </div>
+    </div>
+
+    <!-- STEP 5: Contexto -->
+    <div id="step-5" class="step container">
+      <h2 class="step-title">Como está a situação atual?</h2>
+      <p class="step-desc">Isso ajuda o app a calibrar o plano com mais realismo.</p>
+      <div class="field">
+        <label>Há quantos meses não conseguem poupar?</label>
+        <input type="number" id="sem-poupar" placeholder="0" min="0" max="120" inputmode="numeric" />
+        <span class="hint">Digite 0 se ainda conseguem poupar.</span>
+      </div>
+      <div class="field">
+        <label>Quanto gastaram a mais no último mês? (opcional)</label>
+        <div class="input-prefix"><span>R$</span>
+          <input type="number" id="gasto-extra" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
+        </div>
+        <span class="hint">Valor que estourou o orçamento, se houver.</span>
+      </div>
+    </div>
+
+    <!-- STEP 6: Objetivos -->
+    <div id="step-6" class="step container">
+      <h2 class="step-title">Quais são os grandes objetivos?</h2>
+      <p class="step-desc">Marque tudo que faz sentido para o casal. Usaremos para personalizar o plano.</p>
+      <div id="objetivos-list" class="checkbox-grid">
+        <label class="checkbox-item"><input type="checkbox" value="reserva_emergencia" /><span class="checkbox-label">🛡️ Reserva de emergência</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="viagem" /><span class="checkbox-label">✈️ Viagem</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="casa_propria" /><span class="checkbox-label">🏡 Casa própria</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="carro" /><span class="checkbox-label">🚗 Carro</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="casamento" /><span class="checkbox-label">💍 Casamento</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="filho" /><span class="checkbox-label">👶 Filho / família</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="investimentos" /><span class="checkbox-label">📈 Investimentos</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="quitar_dividas" /><span class="checkbox-label">💳 Quitar dívidas</span></label>
+      </div>
+    </div>
+
+    <!-- STEP ACTIONS (fixed bottom) -->
+    <div class="step-actions">
+      <button id="btn-prev" class="btn btn-secondary" style="display:none">← Voltar</button>
+      <button id="btn-next" class="btn btn-primary">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: REALISM ════════════ -->
+  <div id="view-realism" class="view">
+    <div class="container" style="padding:24px 16px;display:flex;flex-direction:column;gap:20px">
+      <div style="font-size:2.5rem;text-align:center">⚠️</div>
+      <h2 style="font-size:1.2rem;font-weight:800;text-align:center">O plano precisa de ajuste</h2>
+      <div id="realism-content"></div>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: PLAN ════════════ -->
+  <div id="view-plan" class="view">
+    <div class="plan-summary">
+      <div class="label">Renda mensal do casal</div>
+      <div class="amount" id="plan-renda">R$ 0</div>
+      <div id="plan-month" style="font-size:.78rem;opacity:.7;margin-top:2px"></div>
+      <div class="plan-summary-grid">
+        <div class="plan-summary-item"><div class="s-label">Gasto</div><div class="s-val" id="plan-gasto">R$ 0</div></div>
+        <div class="plan-summary-item"><div class="s-label">Sobrou</div><div class="s-val" id="plan-sobrou">R$ 0</div></div>
+        <div class="plan-summary-item">
+          <div class="s-label">Mês</div>
+          <div class="s-val" style="font-size:.75rem" id="plan-month-short"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-content">
+      <div class="section-title">Envelopes do mês</div>
+      <div id="envelopes-container"></div>
+
+      <div class="disclaimer" id="plan-disclaimer">
+        <span>ℹ️</span>
+        <span>Plano estimado com base nos dados que você informou. Não substitui orientação de um profissional financeiro.</span>
+      </div>
+
+      <div style="padding:0 16px 16px">
+        <button class="btn btn-ghost btn-sm" onclick="resetApp()">🔄 Refazer diagnóstico</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: TRACKING ════════════ -->
+  <div id="view-tracking" class="view">
+    <div class="month-summary-bar">
+      <div class="month-pills" id="month-pills"></div>
+      <div class="month-stats">
+        <div class="stat-card"><div class="s-label">Entrou</div><div class="s-val" id="stat-entrou">R$ 0</div></div>
+        <div class="stat-card negative"><div class="s-label">Saiu</div><div class="s-val" id="stat-saiu">R$ 0</div></div>
+        <div id="stat-sobrou-card" class="stat-card positive"><div class="s-label">Sobrou</div><div class="s-val" id="stat-sobrou">R$ 0</div></div>
+      </div>
+    </div>
+
+    <div class="scroll-content">
+      <div class="section-title">Lançamentos</div>
+      <div id="tx-list" class="tx-list"></div>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: META ════════════ -->
+  <div id="view-meta" class="view">
+    <div class="goal-hero">
+      <h3 id="goal-nome">Meta</h3>
+      <div class="big"><span id="goal-poupado">R$ 0</span></div>
+      <div class="sub">de <span id="goal-total">R$ 0</span> · <span id="goal-pct">0%</span> concluído</div>
+      <div class="goal-progress-bar"><div id="goal-bar-fill" class="goal-progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="scroll-content">
+      <div id="goal-stats" class="goal-stats-grid"></div>
+      <div class="section-title">Histórico de aportes</div>
+      <div id="goal-history" class="tx-list"></div>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: HISTORY ════════════ -->
+  <div id="view-history" class="view">
+    <div class="top-bar">
+      <div>
+        <h2>Histórico</h2>
+        <div class="subtitle">Últimos 6 meses</div>
+      </div>
+    </div>
+    <div class="scroll-content">
+      <div class="chart-container">
+        <h4>Gastos vs. Renda</h4>
+        <div class="chart-wrapper"><canvas id="chart-bar"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <h4>Gastos por categoria — mês atual</h4>
+        <div id="chart-pie-wrap" class="chart-wrapper"><canvas id="chart-pie"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ BOTTOM NAV ════════════ -->
+  <nav id="bottom-nav" class="bottom-nav">
+    <button class="nav-item active" data-view="plan">
+      <span class="icon">📊</span>Plano
+    </button>
+    <button class="nav-item" data-view="tracking">
+      <span class="icon">📝</span>Gastos
+    </button>
+    <button class="nav-item" data-view="meta">
+      <span class="icon">🎯</span>Meta
+    </button>
+    <button class="nav-item" data-view="history">
+      <span class="icon">📈</span>Histórico
+    </button>
+  </nav>
+
+  <!-- FAB -->
+  <button id="fab" class="fab" title="Lançar gasto">+</button>
+
+</div><!-- /app -->
+
+<!-- MODAL: lançar gasto -->
+<div id="modal-add" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Lançar gasto</div>
+    <div id="modal-add-content"></div>
+    <button class="btn btn-secondary" data-close-modal="modal-add">Cancelar</button>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
