@@ -1,0 +1,1794 @@
+/* ============================================================
+   APP-FINANCE — Dark Fintech Mobile-First SPA
+   ============================================================ */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* Colors */
+  --bg-deep:    #0B0D10;
+  --bg-page:    #14171C;
+  --bg-surf:    #1B1F26;
+  --bg-raise:   #242932;
+  --border:     rgba(255, 255, 255, .07);
+  --border-md:  rgba(255, 255, 255, .11);
+  --teal:       #00E5A0;
+  --teal-dim:   rgba(0, 229, 160, .12);
+  --teal-glow:  rgba(0, 229, 160, .22);
+  --danger:     #EF4444;
+  --danger-dim: rgba(239, 68, 68, .12);
+  --warn:       #F59E0B;
+  --warn-dim:   rgba(245, 158, 11, .12);
+  --txt1:       #F1F5F9;
+  --txt2:       #94A3B8;
+  --txt3:       #475569;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  /* Shadow */
+  --shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 4px 16px rgba(0, 0, 0, .3);
+
+  /* Layout */
+  --nav-h:    64px;
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+/* ============================================================
+   1. RESET
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-page);
+  color: var(--txt1);
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   2. LAYOUT
+   ============================================================ */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--nav-h) + var(--safe-bot) + 20px);
+}
+
+.view.active {
+  display: flex;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ============================================================
+   3. SPLASH
+   ============================================================ */
+#splash {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 999;
+  transition: opacity .4s ease;
+}
+
+#splash.splash-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--teal-dim);
+  border: 1px solid var(--teal-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-logo svg {
+  width: 32px;
+  height: 32px;
+  stroke: var(--teal);
+  fill: none;
+}
+
+/* ============================================================
+   4. BOTTOM NAV
+   ============================================================ */
+#bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--nav-h) + var(--safe-bot));
+  padding-bottom: var(--safe-bot);
+  background: var(--bg-surf);
+  border-top: 1px solid var(--border);
+  display: none;
+  z-index: 100;
+}
+
+#bottom-nav.visible {
+  display: flex;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--txt3);
+  font-size: .65rem;
+  line-height: 1.07;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  font-weight: 700;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color .15s;
+}
+
+.nav-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+  fill: none;
+  stroke: currentColor;
+}
+
+.nav-btn.active {
+  color: var(--teal);
+}
+
+.nav-btn.active svg {
+  stroke: var(--teal);
+}
+
+/* ============================================================
+   5. PAGE HEADER
+   ============================================================ */
+.ph {
+  position: sticky;
+  top: 0;
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 40;
+}
+
+.ph h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ph .sub {
+  font-size: .75rem;
+  color: var(--txt3);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   6. CARDS
+   ============================================================ */
+.card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+
+.card-p {
+  padding: 16px;
+}
+
+/* ============================================================
+   7. RESERVE METER
+   ============================================================ */
+.meter {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px 16px;
+  margin: 16px;
+}
+
+.meter-lbl {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--txt3);
+  margin-bottom: 8px;
+}
+
+.meter-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.meter-val.healthy  { color: var(--teal); }
+.meter-val.warn     { color: var(--warn); }
+.meter-val.critical { color: var(--danger); }
+
+.meter-sub {
+  font-size: .8rem;
+  color: var(--txt2);
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.meter-track {
+  height: 6px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .6s cubic-bezier(.4, 0, .2, 1);
+}
+
+.meter-fill.healthy  { background: var(--teal); }
+.meter-fill.warn     { background: var(--warn); }
+.meter-fill.critical { background: var(--danger); }
+
+.meter-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .72rem;
+  color: var(--txt3);
+  margin-top: 8px;
+}
+
+/* ============================================================
+   8. STAT GRID
+   ============================================================ */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.stat-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px;
+}
+
+.stat-lbl {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--txt3);
+  margin-bottom: 6px;
+}
+
+.stat-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--txt1);
+}
+
+.stat-val.pos { color: var(--teal); }
+.stat-val.neg { color: var(--danger); }
+
+.stat-sub {
+  font-size: .72rem;
+  color: var(--txt3);
+  margin-top: 3px;
+}
+
+/* ============================================================
+   9. SECTION HEAD
+   ============================================================ */
+.sh {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--txt3);
+  padding: 16px 16px 8px;
+}
+
+/* ============================================================
+   10. ALERTS
+   ============================================================ */
+.alert {
+  border-radius: var(--r-md);
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+}
+
+.alert svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  fill: none;
+  stroke: currentColor;
+}
+
+.alert-body {
+  font-size: .83rem;
+  line-height: 1.6;
+}
+
+.alert-body strong {
+  font-weight: 700;
+}
+
+.al-danger {
+  background: var(--danger-dim);
+  border: 1px solid rgba(239, 68, 68, .2);
+  color: var(--danger);
+}
+
+.al-warn {
+  background: var(--warn-dim);
+  border: 1px solid rgba(245, 158, 11, .2);
+  color: var(--warn);
+}
+
+.al-teal {
+  background: var(--teal-dim);
+  border: 1px solid var(--teal-glow);
+  color: var(--teal);
+}
+
+.al-neutral {
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  color: var(--txt2);
+}
+
+/* ============================================================
+   11. BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border-radius: var(--r-md);
+  font-size: .9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.btn:active {
+  transform: scale(.97);
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: var(--bg-deep);
+  width: 100%;
+}
+
+.btn-primary:hover {
+  opacity: .9;
+}
+
+.btn-ghost {
+  background: var(--bg-raise);
+  color: var(--txt2);
+  border: 1px solid var(--border-md);
+}
+
+.btn-ghost:hover {
+  color: var(--txt1);
+}
+
+.btn-danger {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: .8rem;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--r-sm);
+  background: var(--bg-raise);
+  color: var(--txt2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* ============================================================
+   12. FORM FIELDS
+   ============================================================ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--txt2);
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  font-size: .95rem;
+  color: var(--txt1);
+  width: 100%;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+::placeholder {
+  color: var(--txt3);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.field input.err {
+  border-color: var(--danger);
+}
+
+.field .hint {
+  font-size: .72rem;
+  color: var(--txt3);
+}
+
+/* Prefix wrapper */
+.pfx {
+  position: relative;
+}
+
+.pfx-sym {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .88rem;
+  color: var(--txt3);
+  pointer-events: none;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.pfx input {
+  padding-left: 36px;
+}
+
+/* Select chevron */
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* ============================================================
+   13. DYNAMIC LIST ITEMS
+   ============================================================ */
+.dyn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dyn-item {
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.dyn-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dyn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.dyn-row input,
+.dyn-row select {
+  flex: 1;
+}
+
+.dyn-item input,
+.dyn-item select {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 11px;
+  font-size: .875rem;
+  color: var(--txt1);
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+}
+
+.dyn-item input:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.dyn-item select:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.dyn-rm {
+  color: var(--txt3);
+  padding: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: color .15s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+}
+
+.dyn-rm:hover {
+  color: var(--danger);
+}
+
+.dyn-rm svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+}
+
+.add-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-md);
+  color: var(--txt2);
+  font-size: .85rem;
+  font-weight: 500;
+  background: none;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  font-family: inherit;
+}
+
+.add-btn:hover {
+  color: var(--teal);
+  border-color: var(--teal-glow);
+}
+
+.add-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* ============================================================
+   14. DIAGNOSIS
+   ============================================================ */
+.diag-wrap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.diag-top {
+  padding: 20px 16px 12px;
+}
+
+.prog-bar {
+  height: 3px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.prog-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 99px;
+  transition: width .35s ease;
+}
+
+.prog-lbl {
+  font-size: .72rem;
+  color: var(--txt3);
+}
+
+.diag-steps {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 100px;
+}
+
+.diag-step {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 16px;
+}
+
+.diag-step.active {
+  display: flex;
+}
+
+.step-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.step-desc {
+  font-size: .875rem;
+  color: var(--txt2);
+  line-height: 1.6;
+  margin-top: -10px;
+}
+
+.step-note {
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  font-size: .8rem;
+  color: var(--txt2);
+  line-height: 1.5;
+}
+
+.diag-foot {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-page);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px calc(12px + var(--safe-bot));
+  display: flex;
+  gap: 10px;
+}
+
+.diag-foot .btn {
+  flex: 1;
+}
+
+/* Checkbox grid */
+.check-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.check-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  border-radius: var(--r-md);
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.check-opt input[type="checkbox"] {
+  display: none;
+}
+
+.chk-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--txt3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+
+.check-opt:has(input:checked) {
+  border-color: var(--teal-glow);
+}
+
+.check-opt:has(input:checked) .chk-box {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.chk-mark {
+  display: none;
+  width: 5px;
+  height: 9px;
+  border: 2px solid var(--bg-deep);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.check-opt:has(input:checked) .chk-mark {
+  display: block;
+}
+
+.chk-lbl {
+  font-size: .88rem;
+  color: var(--txt1);
+}
+
+/* ============================================================
+   15. CONTRACTS
+   ============================================================ */
+.contract-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  margin: 0 16px 10px;
+}
+
+.cc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.cc-name {
+  font-weight: 600;
+  font-size: .95rem;
+}
+
+.cc-meta {
+  font-size: .75rem;
+  color: var(--txt3);
+  margin-top: 2px;
+}
+
+.cc-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.cc-commission {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cc-comm-lbl {
+  font-size: .72rem;
+  color: var(--txt3);
+}
+
+.cc-comm-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.cc-pending {
+  font-size: .72rem;
+  color: var(--txt3);
+  font-style: italic;
+}
+
+/* ============================================================
+   16. BADGE
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.bdg-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.bdg-teal    { background: var(--teal-dim);   color: var(--teal); }
+.bdg-warn    { background: var(--warn-dim);   color: var(--warn); }
+.bdg-neutral { background: var(--bg-raise);   color: var(--txt2); }
+.bdg-danger  { background: var(--danger-dim); color: var(--danger); }
+
+/* ============================================================
+   17. TX LIST
+   ============================================================ */
+.tx-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surf);
+}
+
+.tx-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--bg-raise);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tx-ico svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--txt2);
+  fill: none;
+}
+
+.tx-body {
+  flex: 1;
+}
+
+.tx-desc {
+  font-size: .88rem;
+  font-weight: 500;
+}
+
+.tx-meta {
+  font-size: .72rem;
+  color: var(--txt3);
+  margin-top: 2px;
+}
+
+.tx-amt {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.tx-del {
+  color: var(--txt3);
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+}
+
+.tx-del:hover {
+  color: var(--danger);
+}
+
+.tx-del svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* ============================================================
+   18. EMPTY STATE
+   ============================================================ */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-ico {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-raise);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.empty-ico svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--txt3);
+  fill: none;
+}
+
+.empty-title {
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--txt2);
+}
+
+.empty-sub {
+  font-size: .8rem;
+  color: var(--txt3);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   19. MODAL
+   ============================================================ */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 13, 16, .88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-bg.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--bg-surf);
+  border: 1px solid var(--border-md);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 8px 20px calc(24px + var(--safe-bot));
+  max-height: 90dvh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  margin: 8px auto 20px;
+}
+
+.modal-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ============================================================
+   20. CHART
+   ============================================================ */
+.chart-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  margin: 0 16px 12px;
+}
+
+.chart-title {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--txt3);
+  margin-bottom: 14px;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 200px;
+}
+
+/* ============================================================
+   21. SETTINGS ROWS
+   ============================================================ */
+.s-group {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin: 0 16px;
+  overflow: hidden;
+}
+
+.s-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.s-row:last-child {
+  border-bottom: none;
+}
+
+.s-row-lbl {
+  font-size: .88rem;
+  font-weight: 500;
+}
+
+.s-row-sub {
+  font-size: .72rem;
+  color: var(--txt3);
+  margin-top: 1px;
+}
+
+.s-row input {
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  border-radius: var(--r-sm);
+  padding: 7px 10px;
+  font-size: .88rem;
+  color: var(--txt1);
+  width: 110px;
+  text-align: right;
+  font-family: inherit;
+}
+
+/* Debt balance inputs inside s-row use pfx wrapper — reset alignment */
+.s-row .pfx input {
+  width: 100%;
+  text-align: left;
+  padding-left: 36px;
+}
+
+.s-row input:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+/* ============================================================
+   22. DISCLAIMER
+   ============================================================ */
+.disclaimer {
+  margin: 0 16px 12px;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-size: .72rem;
+  color: var(--txt3);
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.disclaimer svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  stroke: var(--txt3);
+  fill: none;
+}
+
+/* ============================================================
+   23. UTIL
+   ============================================================ */
+.num {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.fw7 {
+  font-weight: 700;
+}
+
+.teal   { color: var(--teal); }
+.danger { color: var(--danger); }
+.warn   { color: var(--warn); }
+.muted  { color: var(--txt3); }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.gap-section {
+  height: 8px;
+  background: var(--bg-deep);
+}
+
+/* ============================================================
+   24. ANIMATIONS
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .view.active {
+    animation: fadein .2s ease;
+  }
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================================
+   25. DESKTOP
+   ============================================================ */
+@media (min-width: 480px) {
+  #bottom-nav {
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 480px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+
+  .diag-foot {
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 480px;
+  }
+
+  .modal-bg {
+    max-width: 100%;
+    left: 0;
+    transform: none;
+    align-items: center;
+  }
+
+  .modal {
+    border-radius: var(--r-xl);
+    margin: 20px;
+    max-width: 440px;
+  }
+}
+
+/* ============================================================
+   RECEIPT PROGRESS BAR (inside contract cards)
+   ============================================================ */
+.rcpt-track {
+  height: 5px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.rcpt-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .5s cubic-bezier(.4, 0, .2, 1);
+}
+
+.rcpt-fill.rcpt-teal    { background: var(--teal); }
+.rcpt-fill.rcpt-warn    { background: var(--warn); }
+.rcpt-fill.rcpt-neutral { background: var(--txt3); width: 0 !important; }
+
+/* ============================================================
+   PLAN — waterfall steps (Início / Reserva view)
+   ============================================================ */
+.plan-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin: 0 16px 4px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.plan-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-step:last-child {
+  border-bottom: none;
+}
+
+.plan-step-urgent {
+  background: var(--danger-dim);
+}
+
+.plan-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--txt3);
+  flex-shrink: 0;
+}
+
+.plan-step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-step-title {
+  font-size: .85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-step-sub {
+  font-size: .72rem;
+  color: var(--txt3);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-step-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: .95rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.plan-step-lbl {
+  flex: 1;
+  font-size: .85rem;
+  color: var(--txt2);
+}
+
+/* No income state */
+.plan-no-income {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+}
+
+.plan-no-income-ico {
+  flex-shrink: 0;
+  color: var(--danger);
+}
+
+.plan-no-income-ico svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* Projections row */
+.plan-proj-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 16px 8px;
+}
+
+.plan-proj-item {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+
+.plan-proj-lbl {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--txt3);
+  margin-bottom: 5px;
+}
+
+.plan-proj-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* ============================================================
+   PLAN COMPARISON (Mês view — Planejado vs Realizado)
+   ============================================================ */
+.plan-cmp-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin: 0 16px 4px;
+  overflow: hidden;
+}
+
+.plan-cmp-head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-cmp-col-lbl {
+  font-size: .62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--txt3);
+  min-width: 72px;
+  text-align: right;
+}
+
+.plan-cmp-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-cmp-row:last-child {
+  border-bottom: none;
+  padding-bottom: 10px;
+}
+
+.plan-cmp-lbl {
+  font-size: .82rem;
+  color: var(--txt2);
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.plan-cmp-val {
+  font-size: .88rem;
+  font-weight: 700;
+  min-width: 72px;
+  text-align: right;
+}
+
+.plan-cmp-val.pos { color: var(--teal); }
+.plan-cmp-val.neg { color: var(--danger); }
+
+.plan-cmp-bar-wrap {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: 3px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.plan-cmp-bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .5s cubic-bezier(.4, 0, .2, 1);
+  opacity: .7;
+}
+
+/* Month closed badge */
+.month-closed-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: .8rem;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.month-closed-badge svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* ============================================================
+   PLAN: step phrase + segmented bar
+   ============================================================ */
+.plan-step-phrase {
+  font-size: .75rem;
+  color: var(--txt3);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.plan-seg-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  gap: 2px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.plan-seg {
+  border-radius: 99px;
+  min-width: 4px;
+  transition: flex .4s ease;
+}
+
+.plan-seg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 0 0 12px;
+}
+
+.plan-seg-lbl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: var(--txt2);
+}
+
+.plan-seg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   CONTAS VIEW
+   ============================================================ */
+.contas-summary-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  margin-bottom: 4px;
+}
+
+.contas-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.contas-summary-lbl {
+  font-size: .82rem;
+  color: var(--txt2);
+}
+
+.contas-summary-val {
+  font-size: .88rem;
+}
+
+.contas-summary-div {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+.contas-list {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin: 0 16px;
+}
+
+.contas-empty {
+  padding: 20px 16px;
+  font-size: .82rem;
+  color: var(--txt3);
+  text-align: center;
+}
+
+.contas-hint {
+  font-size: .75rem;
+  color: var(--txt3);
+  padding: 0 16px 8px;
+  line-height: 1.5;
+}
+
+.contas-add-btn {
+  width: 100%;
+  border-radius: 0;
+  border-top: 1px solid var(--border);
+  justify-content: center;
+  font-size: .82rem;
+  color: var(--teal);
+  background: none;
+  padding: 14px 16px;
+}
+
+.contas-add-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.conta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.conta-item:last-of-type { border-bottom: none; }
+
+.conta-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.conta-item-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.conta-item-name {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--txt1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conta-item-val {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--txt1);
+  white-space: nowrap;
+}
+
+.conta-due {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 99px;
+  margin-top: 3px;
+}
+
+.conta-due-past    { background: var(--danger-dim); color: var(--danger); }
+.conta-due-today   { background: var(--warn-dim);   color: var(--warn); }
+.conta-due-future  { background: var(--teal-dim);   color: var(--teal); }
+
+.conta-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.conta-actions .btn-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.conta-actions .btn-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Dívida */
+.conta-item-debt {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.conta-debt-header {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.debt-prog-track {
+  height: 6px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.debt-prog-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 99px;
+  transition: width .5s ease;
+}
+
+.debt-prog-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+/* ============================================================
+   MONTH OVERVIEW (summary phrases)
+   ============================================================ */
+.month-overview {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  margin: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overview-phrase {
+  font-size: .82rem;
+  color: var(--txt2);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.warn  { color: var(--warn); }
+.teal  { color: var(--teal); }
+.fw7   { font-weight: 700; }
+
+.sh-total {
+  float: right;
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--txt3);
+  font-family: var(--font-num, 'Space Grotesk', sans-serif);
+}
+
+/* 6-button nav: slightly smaller */
+#bottom-nav { gap: 0; }
+#bottom-nav .nav-btn { font-size: .6rem; padding: 8px 2px 10px; min-width: 0; flex: 1; }

@@ -1,269 +1,580 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#2563eb" />
-  <meta name="description" content="Controle financeiro do casal — diagnóstico, plano e acompanhamento mensal." />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#0B0D10"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="description" content="Controle financeiro para renda variável — reserva como prioridade."/>
   <title>Controle Financeiro</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icons/icon-180.png"/>
+  <link rel="stylesheet" href="css/app.css"/>
+  <style>
+    /* month pill (scoped here to avoid CSS specificity issues) */
+    .month-pill {
+      padding: 6px 14px; border-radius: 99px; font-size: .78rem; font-weight: 600;
+      border: 1px solid var(--border-md); background: none; color: var(--txt3);
+      cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap;
+    }
+    .month-pill.active { background: var(--teal); color: var(--bg-deep); border-color: var(--teal); }
+  </style>
 </head>
 <body>
 
-<!-- ── SPLASH ─────────────────────────────────────────────── -->
+<!-- SPLASH -->
 <div id="splash">
-  <div class="s-logo">💰</div>
-  <h1>Controle Financeiro</h1>
-  <p>Organização do casal</p>
+  <div class="splash-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  </div>
+  <h1 style="font-family:var(--font-num);font-size:1.4rem;font-weight:700;color:var(--txt1)">Controle Financeiro</h1>
+  <p style="font-size:.85rem;color:var(--txt3)">Renda variável · Reserva em primeiro lugar</p>
 </div>
 
-<!-- ── APP ────────────────────────────────────────────────── -->
 <div id="app">
 
-  <!-- ════════════ VIEW: WELCOME ════════════ -->
-  <div id="view-welcome" class="view">
-    <div class="welcome-logo">💰</div>
-    <h1 class="welcome-title">Controle Financeiro</h1>
-    <p class="welcome-subtitle">Plano personalizado para o casal, feito com base na sua realidade.</p>
-
-    <div class="welcome-features">
-      <div class="feature-item"><span class="feature-icon">📋</span>Diagnóstico rápido do orçamento</div>
-      <div class="feature-item"><span class="feature-icon">📊</span>Plano gerado pelos seus números</div>
-      <div class="feature-item"><span class="feature-icon">✉️</span>Envelopes com alertas em tempo real</div>
-      <div class="feature-item"><span class="feature-icon">🎯</span>Acompanhamento de meta de poupança</div>
-    </div>
-
-    <button id="btn-start" class="btn btn-primary" style="max-width:320px;width:100%">
-      Começar diagnóstico →
-    </button>
-    <p class="text-muted" style="font-size:.78rem">Os dados ficam apenas no seu dispositivo.</p>
+<!-- ═══════════════════════════════════════════════════════════
+     WELCOME
+════════════════════════════════════════════════════════════ -->
+<section id="view-welcome" class="view" style="align-items:center;justify-content:center;padding:40px 24px;gap:28px;text-align:center">
+  <div class="splash-logo" style="width:72px;height:72px;border-radius:18px">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
   </div>
-
-  <!-- ════════════ VIEW: DIAGNOSIS ════════════ -->
-  <div id="view-diagnosis" class="view">
-    <div class="step-header container">
-      <div class="step-progress-bar"><div id="step-progress-fill" class="step-progress-fill" style="width:16.6%"></div></div>
-      <div id="step-label" class="step-label">Etapa 1 de 6</div>
+  <div>
+    <h1 style="font-family:var(--font-num);font-size:1.7rem;font-weight:700;margin-bottom:10px">Controle Financeiro</h1>
+    <p style="font-size:.9rem;color:var(--txt2);line-height:1.7;max-width:300px">
+      Feito para renda variável.<br>A reserva é a prioridade — não o salário do mês.
+    </p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;text-align:left">
+    <div style="display:flex;align-items:center;gap:12px;padding:13px;background:var(--bg-surf);border:1px solid var(--border);border-radius:var(--r-md)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span style="font-size:.85rem;color:var(--txt2)">Reserva como indicador principal de saúde</span>
     </div>
-
-    <!-- STEP 1: Renda -->
-    <div id="step-1" class="step active container">
-      <h2 class="step-title">Qual é a renda mensal do casal?</h2>
-      <p class="step-desc">Some todos os salários, freelas e rendas fixas do mês.</p>
-      <div class="field">
-        <label>Renda total mensal</label>
-        <div class="input-prefix">
-          <span>R$</span>
-          <input type="number" id="renda" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
-        </div>
-        <span class="hint">Inclua salário, freelance, aluguel recebido, etc.</span>
-      </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px;background:var(--bg-surf);border:1px solid var(--border);border-radius:var(--r-md)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span style="font-size:.85rem;color:var(--txt2)">Contratos com cálculo automático de comissão</span>
     </div>
-
-    <!-- STEP 2: Contas fixas -->
-    <div id="step-2" class="step container">
-      <h2 class="step-title">Quais são as contas fixas?</h2>
-      <p class="step-desc">Adicione tudo que você paga todo mês: aluguel, luz, internet, escola…</p>
-      <div id="fixas-list" class="list-items"></div>
-      <button id="btn-add-fixa" class="add-item-btn">+ Adicionar conta fixa</button>
-    </div>
-
-    <!-- STEP 3: Dívidas -->
-    <div id="step-3" class="step container">
-      <h2 class="step-title">Têm dívidas no momento?</h2>
-      <p class="step-desc">Cartão de crédito parcelado, empréstimo, financiamento extra… Se não tiver, pode pular.</p>
-      <div id="dividas-list" class="list-items"></div>
-      <button id="btn-add-divida" class="add-item-btn">+ Adicionar dívida</button>
-    </div>
-
-    <!-- STEP 4: Meta -->
-    <div id="step-4" class="step container">
-      <h2 class="step-title">Qual é o objetivo de poupança?</h2>
-      <p class="step-desc">Uma meta concreta ajuda o app a calcular o valor mensal necessário.</p>
-      <div class="field">
-        <label>Nome do objetivo</label>
-        <input type="text" id="meta-nome" placeholder="Ex: Viagem para Europa" maxlength="50" />
-      </div>
-      <div class="field">
-        <label>Valor total da meta</label>
-        <div class="input-prefix"><span>R$</span>
-          <input type="number" id="meta-valor" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
-        </div>
-      </div>
-      <div class="field">
-        <label>Em quantos meses querem atingir?</label>
-        <input type="number" id="meta-prazo" placeholder="Ex: 12" min="1" max="360" inputmode="numeric" />
-        <span class="hint">O app vai calcular quanto guardar por mês.</span>
-      </div>
-    </div>
-
-    <!-- STEP 5: Contexto -->
-    <div id="step-5" class="step container">
-      <h2 class="step-title">Como está a situação atual?</h2>
-      <p class="step-desc">Isso ajuda o app a calibrar o plano com mais realismo.</p>
-      <div class="field">
-        <label>Há quantos meses não conseguem poupar?</label>
-        <input type="number" id="sem-poupar" placeholder="0" min="0" max="120" inputmode="numeric" />
-        <span class="hint">Digite 0 se ainda conseguem poupar.</span>
-      </div>
-      <div class="field">
-        <label>Quanto gastaram a mais no último mês? (opcional)</label>
-        <div class="input-prefix"><span>R$</span>
-          <input type="number" id="gasto-extra" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
-        </div>
-        <span class="hint">Valor que estourou o orçamento, se houver.</span>
-      </div>
-    </div>
-
-    <!-- STEP 6: Objetivos -->
-    <div id="step-6" class="step container">
-      <h2 class="step-title">Quais são os grandes objetivos?</h2>
-      <p class="step-desc">Marque tudo que faz sentido para o casal. Usaremos para personalizar o plano.</p>
-      <div id="objetivos-list" class="checkbox-grid">
-        <label class="checkbox-item"><input type="checkbox" value="reserva_emergencia" /><span class="checkbox-label">🛡️ Reserva de emergência</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="viagem" /><span class="checkbox-label">✈️ Viagem</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="casa_propria" /><span class="checkbox-label">🏡 Casa própria</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="carro" /><span class="checkbox-label">🚗 Carro</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="casamento" /><span class="checkbox-label">💍 Casamento</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="filho" /><span class="checkbox-label">👶 Filho / família</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="investimentos" /><span class="checkbox-label">📈 Investimentos</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="quitar_dividas" /><span class="checkbox-label">💳 Quitar dívidas</span></label>
-      </div>
-    </div>
-
-    <!-- STEP ACTIONS (fixed bottom) -->
-    <div class="step-actions">
-      <button id="btn-prev" class="btn btn-secondary" style="display:none">← Voltar</button>
-      <button id="btn-next" class="btn btn-primary">Próximo →</button>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px;background:var(--bg-surf);border:1px solid var(--border);border-radius:var(--r-md)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span style="font-size:.85rem;color:var(--txt2)">Meses sem renda: app mostra o impacto real na reserva</span>
     </div>
   </div>
+  <button id="btn-welcome" class="btn btn-primary" style="max-width:320px">
+    Iniciar diagnóstico
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </button>
+  <p style="font-size:.72rem;color:var(--txt3)">Dados salvos apenas neste dispositivo.</p>
+</section>
 
-  <!-- ════════════ VIEW: REALISM ════════════ -->
-  <div id="view-realism" class="view">
-    <div class="container" style="padding:24px 16px;display:flex;flex-direction:column;gap:20px">
-      <div style="font-size:2.5rem;text-align:center">⚠️</div>
-      <h2 style="font-size:1.2rem;font-weight:800;text-align:center">O plano precisa de ajuste</h2>
-      <div id="realism-content"></div>
+<!-- ═══════════════════════════════════════════════════════════
+     DIAGNOSIS
+════════════════════════════════════════════════════════════ -->
+<section id="view-diagnosis" class="view" style="padding-bottom:0">
+  <div class="diag-wrap">
+    <div class="diag-top container">
+      <div class="prog-bar"><div id="prog-fill" class="prog-fill" style="width:16.6%"></div></div>
+      <div id="prog-lbl" class="prog-lbl">Etapa 1 de 6</div>
     </div>
-  </div>
 
-  <!-- ════════════ VIEW: PLAN ════════════ -->
-  <div id="view-plan" class="view">
-    <div class="plan-summary">
-      <div class="label">Renda mensal do casal</div>
-      <div class="amount" id="plan-renda">R$ 0</div>
-      <div id="plan-month" style="font-size:.78rem;opacity:.7;margin-top:2px"></div>
-      <div class="plan-summary-grid">
-        <div class="plan-summary-item"><div class="s-label">Gasto</div><div class="s-val" id="plan-gasto">R$ 0</div></div>
-        <div class="plan-summary-item"><div class="s-label">Sobrou</div><div class="s-val" id="plan-sobrou">R$ 0</div></div>
-        <div class="plan-summary-item">
-          <div class="s-label">Mês</div>
-          <div class="s-val" style="font-size:.75rem" id="plan-month-short"></div>
+    <div class="diag-steps container">
+
+      <!-- STEP 1: Renda variável -->
+      <div id="step-1" class="diag-step active">
+        <h2 class="step-title">Qual é a média de renda mensal do casal?</h2>
+        <p class="step-desc">Como a renda vem de comissões de obras, esses números são referência histórica — não um salário fixo. O app não os usa como base de gasto mensal.</p>
+        <div class="step-note">
+          A lógica aqui é diferente: em vez de dividir o salário, o objetivo é construir uma reserva que cobre os meses sem renda.
+        </div>
+        <div class="field">
+          <label>Média mensal (últimos meses)</label>
+          <div class="pfx">
+            <span class="pfx-sym">R$</span>
+            <input type="number" id="avg-income" placeholder="0,00" min="0" step=".01" inputmode="decimal"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Pior mês recente (menor entrada)</label>
+          <div class="pfx">
+            <span class="pfx-sym">R$</span>
+            <input type="number" id="worst-month" placeholder="0,00" min="0" step=".01" inputmode="decimal"/>
+          </div>
+          <span class="hint">Inclua meses zerados — ajuda a dimensionar a reserva.</span>
         </div>
       </div>
+
+      <!-- STEP 2: Fixas -->
+      <div id="step-2" class="diag-step">
+        <h2 class="step-title">Quanto custa manter a vida por mês?</h2>
+        <p class="step-desc">Este é o número mais importante: o custo fixo mensal. É o que a reserva precisa cobrir nos meses sem renda.</p>
+        <div id="fixas-list" class="dyn-list"></div>
+        <button id="btn-add-fixa" class="add-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar conta fixa
+        </button>
+      </div>
+
+      <!-- STEP 3: Dívidas -->
+      <div id="step-3" class="diag-step">
+        <h2 class="step-title">Têm dívidas ativas?</h2>
+        <p class="step-desc">Parcelas de cartão, empréstimo, financiamento. Se não houver, avance.</p>
+        <div id="debts-list" class="dyn-list"></div>
+        <button id="btn-add-debt" class="add-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar dívida
+        </button>
+      </div>
+
+      <!-- STEP 4: Reserva atual -->
+      <div id="step-4" class="diag-step">
+        <h2 class="step-title">Quanto já têm guardado hoje?</h2>
+        <p class="step-desc">Poupança, CDB, conta reserva — qualquer valor de segurança. Pode ser zero.</p>
+        <div class="field">
+          <label>Reserva atual</label>
+          <div class="pfx">
+            <span class="pfx-sym">R$</span>
+            <input type="number" id="reserve-now" placeholder="0,00" min="0" step=".01" inputmode="decimal"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Meta de reserva -->
+      <div id="step-5" class="diag-step">
+        <h2 class="step-title">Quantos meses de reserva querem ter?</h2>
+        <p class="step-desc">Para renda 100% variável, o recomendado é entre 6 e 12 meses. O app calcula o valor-alvo.</p>
+        <div class="step-note">Sugestão: mínimo 6 meses. Se já houve meses zerados, considere 9–12.</div>
+        <div class="field">
+          <label>Meta em meses</label>
+          <input type="number" id="meta-months" value="6" min="1" max="36" inputmode="numeric"/>
+        </div>
+        <div id="meta-preview" style="font-size:.9rem;color:var(--teal);font-family:var(--font-num);min-height:1.4em"></div>
+      </div>
+
+      <!-- STEP 6: Objetivos -->
+      <div id="step-6" class="diag-step">
+        <h2 class="step-title">Quais são os objetivos do casal?</h2>
+        <p class="step-desc">Esses objetivos só entram no plano depois que a reserva estiver saudável.</p>
+        <div id="goals-list" class="check-grid">
+          <label class="check-opt"><input type="checkbox" value="complete_reserve"/><div class="chk-box"><div class="chk-mark"></div></div><span class="chk-lbl">Completar reserva de emergência</span></label>
+          <label class="check-opt"><input type="checkbox" value="trip"/><div class="chk-box"><div class="chk-mark"></div></div><span class="chk-lbl">Viagem</span></label>
+          <label class="check-opt"><input type="checkbox" value="own_house"/><div class="chk-box"><div class="chk-mark"></div></div><span class="chk-lbl">Casa própria</span></label>
+          <label class="check-opt"><input type="checkbox" value="car"/><div class="chk-box"><div class="chk-mark"></div></div><span class="chk-lbl">Carro</span></label>
+          <label class="check-opt"><input type="checkbox" value="pay_debts"/><div class="chk-box"><div class="chk-mark"></div></div><span class="chk-lbl">Quitar dívidas</span></label>
+          <label class="check-opt"><input type="checkbox" value="invest"/><div class="chk-box"><div class="chk-mark"></div></div><span class="chk-lbl">Começar a investir</span></label>
+        </div>
+      </div>
+
+    </div><!-- /diag-steps -->
+
+    <div class="diag-foot">
+      <button id="btn-prev" class="btn btn-ghost" style="display:none">Voltar</button>
+      <button id="btn-next" class="btn btn-primary">Continuar</button>
     </div>
+  </div>
+</section>
 
-    <div class="scroll-content">
-      <div class="section-title">Envelopes do mês</div>
-      <div id="envelopes-container"></div>
+<!-- ═══════════════════════════════════════════════════════════
+     RESERVE (main dashboard)
+════════════════════════════════════════════════════════════ -->
+<section id="view-reserve" class="view">
+  <div class="ph">
+    <div>
+      <h2>Reserva</h2>
+      <div class="sub">Indicador principal de saúde</div>
+    </div>
+    <button class="btn-icon" id="btn-goto-settings" title="Ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
 
-      <div class="disclaimer" id="plan-disclaimer">
-        <span>ℹ️</span>
-        <span>Plano estimado com base nos dados que você informou. Não substitui orientação de um profissional financeiro.</span>
-      </div>
+  <div id="reserve-alert" style="padding:0 16px;margin-top:12px" hidden></div>
+  <div id="realism-check" hidden></div>
 
-      <div style="padding:0 16px 16px">
-        <button class="btn btn-ghost btn-sm" onclick="resetApp()">🔄 Refazer diagnóstico</button>
-      </div>
+  <div id="meter" class="meter"></div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-lbl">Entrou (mês)</div>
+      <div id="stat-in" class="stat-val num">R$ 0</div>
+      <div class="stat-sub">comissões</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Saiu (mês)</div>
+      <div id="stat-out" class="stat-val num">R$ 0</div>
+      <div class="stat-sub">lançamentos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Saldo do mês</div>
+      <div id="stat-bal" class="stat-val num">R$ 0</div>
+    </div>
+    <div class="stat-card" id="card-goto-ct" style="cursor:pointer">
+      <div class="stat-lbl">Contratos fechados</div>
+      <div id="stat-ct" class="stat-val num">—</div>
+      <div class="stat-sub">ver obras</div>
     </div>
   </div>
 
-  <!-- ════════════ VIEW: TRACKING ════════════ -->
-  <div id="view-tracking" class="view">
-    <div class="month-summary-bar">
-      <div class="month-pills" id="month-pills"></div>
-      <div class="month-stats">
-        <div class="stat-card"><div class="s-label">Entrou</div><div class="s-val" id="stat-entrou">R$ 0</div></div>
-        <div class="stat-card negative"><div class="s-label">Saiu</div><div class="s-val" id="stat-saiu">R$ 0</div></div>
-        <div id="stat-sobrou-card" class="stat-card positive"><div class="s-label">Sobrou</div><div class="s-val" id="stat-sobrou">R$ 0</div></div>
-      </div>
-    </div>
+  <div id="plan-block"></div>
+</section>
 
-    <div class="scroll-content">
-      <div class="section-title">Lançamentos</div>
-      <div id="tx-list" class="tx-list"></div>
+<!-- ═══════════════════════════════════════════════════════════
+     CONTRACTS
+════════════════════════════════════════════════════════════ -->
+<section id="view-contracts" class="view">
+  <div class="ph">
+    <div>
+      <h2>Obras / Contratos</h2>
+      <div class="sub">Fonte da renda variável</div>
+    </div>
+    <button id="btn-new-ct" class="btn btn-ghost btn-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova obra
+    </button>
+  </div>
+  <div id="contracts-list" style="padding-top:8px"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONTAS
+════════════════════════════════════════════════════════════ -->
+<section id="view-contas" class="view">
+  <div class="ph">
+    <div><h2>Contas</h2><div class="sub">Fixas, variáveis e dívidas</div></div>
+  </div>
+  <div id="contas-summary" style="padding:0 16px 4px"></div>
+  <div id="contas-fixas-section"></div>
+  <div id="contas-variables-section"></div>
+  <div id="contas-debts-section"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MONTH
+════════════════════════════════════════════════════════════ -->
+<section id="view-month" class="view">
+  <div class="ph">
+    <div><h2>Mês</h2><div class="sub">Lançamentos e histórico</div></div>
+  </div>
+
+  <div style="padding:12px 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <div id="month-pills" style="display:inline-flex;gap:8px"></div>
+  </div>
+
+  <div id="month-overview" hidden></div>
+
+  <div id="month-plan-cmp"></div>
+
+  <div id="month-close-wrap"></div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-lbl">Comissões</div>
+      <div id="m-income" class="stat-val num">R$ 0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Gastos</div>
+      <div id="m-out" class="stat-val num">R$ 0</div>
+    </div>
+    <div class="stat-card" style="grid-column:1/-1">
+      <div class="stat-lbl">Saldo</div>
+      <div id="m-bal" class="stat-val num">R$ 0</div>
     </div>
   </div>
 
-  <!-- ════════════ VIEW: META ════════════ -->
-  <div id="view-meta" class="view">
-    <div class="goal-hero">
-      <h3 id="goal-nome">Meta</h3>
-      <div class="big"><span id="goal-poupado">R$ 0</span></div>
-      <div class="sub">de <span id="goal-total">R$ 0</span> · <span id="goal-pct">0%</span> concluído</div>
-      <div class="goal-progress-bar"><div id="goal-bar-fill" class="goal-progress-fill" style="width:0%"></div></div>
-    </div>
-
-    <div class="scroll-content">
-      <div id="goal-stats" class="goal-stats-grid"></div>
-      <div class="section-title">Histórico de aportes</div>
-      <div id="goal-history" class="tx-list"></div>
-    </div>
+  <div class="chart-card" style="margin-top:0">
+    <div class="chart-title">Gastos por categoria</div>
+    <div id="month-donut-wrap" class="chart-wrap" style="height:220px"></div>
   </div>
 
-  <!-- ════════════ VIEW: HISTORY ════════════ -->
-  <div id="view-history" class="view">
-    <div class="top-bar">
-      <div>
-        <h2>Histórico</h2>
-        <div class="subtitle">Últimos 6 meses</div>
-      </div>
-    </div>
-    <div class="scroll-content">
-      <div class="chart-container">
-        <h4>Gastos vs. Renda</h4>
-        <div class="chart-wrapper"><canvas id="chart-bar"></canvas></div>
-      </div>
-      <div class="chart-container">
-        <h4>Gastos por categoria — mês atual</h4>
-        <div id="chart-pie-wrap" class="chart-wrapper"><canvas id="chart-pie"></canvas></div>
-      </div>
-    </div>
+  <div class="sh">Lançamentos</div>
+  <div id="month-txs" class="tx-list" style="background:var(--bg-surf);margin:0 16px;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border)"></div>
+
+  <div class="sh" style="margin-top:8px">Histórico 6 meses</div>
+  <div class="chart-card">
+    <div class="chart-title">Comissões vs. gastos</div>
+    <div class="chart-wrap"><canvas id="chart-bar-hist"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Evolução da reserva</div>
+    <div class="chart-wrap"><canvas id="chart-line-res"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Evolução da dívida total</div>
+    <div id="month-debt-wrap" class="chart-wrap" style="height:180px"></div>
+  </div>
+  <div class="disclaimer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    Estimativa com base nos seus dados. Não substitui orientação de um profissional financeiro.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SETTINGS
+════════════════════════════════════════════════════════════ -->
+<section id="view-settings" class="view">
+  <div class="ph">
+    <div><h2>Ajustes</h2><div class="sub">Parâmetros de comissão e dados</div></div>
   </div>
 
-  <!-- ════════════ BOTTOM NAV ════════════ -->
-  <nav id="bottom-nav" class="bottom-nav">
-    <button class="nav-item active" data-view="plan">
-      <span class="icon">📊</span>Plano
-    </button>
-    <button class="nav-item" data-view="tracking">
-      <span class="icon">📝</span>Gastos
-    </button>
-    <button class="nav-item" data-view="meta">
-      <span class="icon">🎯</span>Meta
-    </button>
-    <button class="nav-item" data-view="history">
-      <span class="icon">📈</span>Histórico
-    </button>
-  </nav>
+  <div class="sh">Parâmetros de comissão</div>
+  <div class="s-group" style="margin:0 16px">
+    <div class="s-row">
+      <div><div class="s-row-lbl">% do valor do contrato</div><div class="s-row-sub">Aplicado sobre o valor total</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="number" id="param-pct" min="0" max="100" step=".1" style="width:70px"/>
+        <span style="font-size:.85rem;color:var(--txt3)">%</span>
+      </div>
+    </div>
+    <div class="s-row">
+      <div><div class="s-row-lbl">Fixo por obra fechada</div><div class="s-row-sub">Valor adicionado a cada contrato</div></div>
+      <div class="pfx" style="max-width:130px">
+        <span class="pfx-sym" style="font-size:.78rem">R$</span>
+        <input type="number" id="param-fixed" min="0" step=".01"/>
+      </div>
+    </div>
+    <div class="s-row">
+      <div><div class="s-row-lbl">Meta de reserva (meses)</div><div class="s-row-sub">Número de meses a cobrir</div></div>
+      <input type="number" id="param-months" min="1" max="36" style="width:70px"/>
+    </div>
+  </div>
+  <div style="padding:12px 16px">
+    <button id="btn-save-params" class="btn btn-primary">Salvar parâmetros</button>
+  </div>
 
-  <!-- FAB -->
-  <button id="fab" class="fab" title="Lançar gasto">+</button>
+  <div class="sh">Resumo do diagnóstico</div>
+  <div id="diag-summary"></div>
 
-</div><!-- /app -->
+  <div id="debt-balances"></div>
 
-<!-- MODAL: lançar gasto -->
-<div id="modal-add" class="modal-backdrop">
+  <div id="ios-guide"></div>
+
+  <div class="sh">Backup</div>
+  <div style="padding:0 16px 12px;display:flex;flex-direction:column;gap:10px">
+    <button id="btn-export" class="btn btn-ghost" style="width:100%">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar backup (JSON)
+    </button>
+    <label class="btn btn-ghost" style="width:100%;cursor:pointer;text-align:center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar backup (JSON)
+      <input type="file" id="btn-import-file" accept=".json" style="display:none"/>
+    </label>
+    <div style="font-size:.72rem;color:var(--txt3);text-align:center">Exportar salva um arquivo JSON com todos os seus dados. Importar substitui os dados atuais.</div>
+  </div>
+
+  <div class="sh">Dados</div>
+  <div style="padding:0 16px 32px">
+    <button id="btn-reset" class="btn btn-danger" style="width:100%">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      Apagar todos os dados
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     BOTTOM NAV
+════════════════════════════════════════════════════════════ -->
+<nav id="bottom-nav">
+  <button class="nav-btn" data-view="reserve">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Reserva
+  </button>
+  <button class="nav-btn" data-view="_launch">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Lançar
+  </button>
+  <button class="nav-btn" data-view="contracts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Obras
+  </button>
+  <button class="nav-btn" data-view="contas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Contas
+  </button>
+  <button class="nav-btn" data-view="month">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Mês
+  </button>
+  <button class="nav-btn" data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Ajustes
+  </button>
+</nav>
+
+</div><!-- /#app -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Launch expense
+════════════════════════════════════════════════════════════ -->
+<div id="modal-launch" class="modal-bg">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Lançar gasto</div>
-    <div id="modal-add-content"></div>
-    <button class="btn btn-secondary" data-close-modal="modal-add">Cancelar</button>
+    <div class="modal-body">
+      <div class="field"><label>Categoria</label><select id="launch-cat"></select></div>
+      <div class="field">
+        <label>Valor</label>
+        <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="launch-val" placeholder="0,00" min=".01" step=".01" inputmode="decimal"/></div>
+      </div>
+      <div class="field"><label>Descrição (opcional)</label><input type="text" id="launch-desc" placeholder="Ex: Supermercado Extra" maxlength="60"/></div>
+      <div class="field"><label>Data</label><input type="date" id="launch-date"/></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-launch-ok" class="btn btn-primary">Confirmar lançamento</button>
+      <button id="btn-launch-cancel" class="btn btn-ghost">Cancelar</button>
+    </div>
   </div>
 </div>
 
-<!-- Chart.js -->
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Contract
+════════════════════════════════════════════════════════════ -->
+<div id="modal-ct" class="modal-bg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="ct-modal-title" class="modal-title">Novo contrato</div>
+    <div class="modal-body">
+      <input type="hidden" id="ct-id"/>
+      <div class="field"><label>Cliente / nome da obra</label><input type="text" id="ct-name" placeholder="Ex: Residencial Silva" maxlength="60"/></div>
+      <div class="field">
+        <label>Valor total do contrato</label>
+        <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="ct-value" placeholder="0,00" min="0" step=".01" inputmode="decimal"/></div>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="ct-status">
+          <option value="pending">Em negociação</option>
+          <option value="closed">Fechado</option>
+        </select>
+      </div>
+      <div class="field" id="ct-date-wrap" hidden>
+        <label>Data de início do serviço</label>
+        <input type="date" id="ct-date"/>
+        <span class="hint">A comissão será lançada neste mês.</span>
+      </div>
+      <div class="field">
+        <label>Comissão personalizada (opcional)</label>
+        <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="ct-override" placeholder="Deixar em branco = usar fórmula padrão" min="0" step=".01" inputmode="decimal"/></div>
+        <span class="hint">Se preenchido, substitui % + fixo.</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-ct-save" class="btn btn-primary">Salvar contrato</button>
+      <button id="btn-ct-cancel" class="btn btn-ghost">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Registrar recebimento
+════════════════════════════════════════════════════════════ -->
+<div id="modal-rcpt" class="modal-bg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar recebimento</div>
+    <div class="modal-body">
+      <div style="background:var(--bg-raise);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:4px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:2px">Contrato</div>
+        <div id="rcpt-contract-name" style="font-size:.9rem;font-weight:600"></div>
+        <div id="rcpt-remaining" style="font-size:.78rem;color:var(--warn);margin-top:3px;font-family:'Space Grotesk',sans-serif"></div>
+      </div>
+      <div class="field">
+        <label>Valor recebido</label>
+        <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="rcpt-val" placeholder="0,00" min=".01" step=".01" inputmode="decimal"/></div>
+      </div>
+      <div class="field"><label>Data do recebimento</label><input type="date" id="rcpt-date"/></div>
+      <div class="field"><label>Observação (opcional)</label><input type="text" id="rcpt-note" placeholder="Ex: Parcela 1 de 2" maxlength="60"/></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-rcpt-save" class="btn btn-primary">Confirmar recebimento</button>
+      <button id="btn-rcpt-cancel" class="btn btn-ghost">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Conta (fixa / variável / dívida)
+════════════════════════════════════════════════════════════ -->
+<div id="modal-conta" class="modal-bg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="modal-conta-title" class="modal-title">Nova conta</div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="conta-name" placeholder="Ex: Aluguel" maxlength="60"/>
+      </div>
+
+      <!-- Fixa -->
+      <div id="conta-fixa-fields">
+        <div class="field">
+          <label>Valor mensal</label>
+          <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="conta-value" placeholder="0,00" min="0" step=".01" inputmode="decimal"/></div>
+        </div>
+        <div class="field">
+          <label>Dia do vencimento (opcional)</label>
+          <input type="number" id="conta-day" placeholder="Ex: 10" min="1" max="31" inputmode="numeric"/>
+        </div>
+      </div>
+
+      <!-- Variável -->
+      <div id="conta-var-fields" hidden>
+        <div class="field">
+          <label>Estimativa mensal</label>
+          <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="conta-est-value" placeholder="0,00" min="0" step=".01" inputmode="decimal"/></div>
+        </div>
+      </div>
+
+      <!-- Dívida -->
+      <div id="conta-debt-fields" hidden>
+        <div class="field">
+          <label>Saldo atual da dívida</label>
+          <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="conta-balance" placeholder="0,00" min="0" step=".01" inputmode="decimal"/></div>
+        </div>
+        <div class="field">
+          <label>Parcela mensal mínima</label>
+          <div class="pfx"><span class="pfx-sym">R$</span><input type="number" id="conta-installment" placeholder="0,00" min="0" step=".01" inputmode="decimal"/></div>
+        </div>
+        <div class="field">
+          <label>Taxa de juros (% a.m., opcional)</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" id="conta-rate" placeholder="Ex: 2,5" min="0" step=".1" inputmode="decimal" style="flex:1"/>
+            <span style="font-size:.85rem;color:var(--txt3)">%</span>
+          </div>
+          <span class="hint">Usada pelo método Avalanche de quitação.</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-conta-save" class="btn btn-primary">Salvar</button>
+      <button id="btn-conta-cancel" class="btn btn-ghost">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CDNs + entry point -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="app.js"></script>
+<script type="module" src="js/main.js"></script>
+<script type="module">
+  // Wire up non-view nav shortcuts after main.js sets up navigate()
+  import { navigate } from './js/router.js';
+  document.getElementById('btn-goto-settings')?.addEventListener('click', () => navigate('settings'));
+  document.getElementById('card-goto-ct')?.addEventListener('click', () => navigate('contracts'));
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/APP-FINANCE/sw.js', { scope: '/APP-FINANCE/' });
+    });
+  }
+</script>
 </body>
 </html>
