@@ -1171,6 +1171,13 @@ body {
   font-family: inherit;
 }
 
+/* Debt balance inputs inside s-row use pfx wrapper — reset alignment */
+.s-row .pfx input {
+  width: 100%;
+  text-align: left;
+  padding-left: 36px;
+}
+
 .s-row input:focus {
   outline: none;
   border-color: var(--teal);
@@ -1301,3 +1308,228 @@ body {
 .rcpt-fill.rcpt-teal    { background: var(--teal); }
 .rcpt-fill.rcpt-warn    { background: var(--warn); }
 .rcpt-fill.rcpt-neutral { background: var(--txt3); width: 0 !important; }
+
+/* ============================================================
+   PLAN — waterfall steps (Início / Reserva view)
+   ============================================================ */
+.plan-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin: 0 16px 4px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.plan-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-step:last-child {
+  border-bottom: none;
+}
+
+.plan-step-urgent {
+  background: var(--danger-dim);
+}
+
+.plan-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-raise);
+  border: 1px solid var(--border-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--txt3);
+  flex-shrink: 0;
+}
+
+.plan-step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-step-title {
+  font-size: .85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-step-sub {
+  font-size: .72rem;
+  color: var(--txt3);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-step-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: .95rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.plan-step-lbl {
+  flex: 1;
+  font-size: .85rem;
+  color: var(--txt2);
+}
+
+/* No income state */
+.plan-no-income {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+}
+
+.plan-no-income-ico {
+  flex-shrink: 0;
+  color: var(--danger);
+}
+
+.plan-no-income-ico svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* Projections row */
+.plan-proj-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 16px 8px;
+}
+
+.plan-proj-item {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+
+.plan-proj-lbl {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--txt3);
+  margin-bottom: 5px;
+}
+
+.plan-proj-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* ============================================================
+   PLAN COMPARISON (Mês view — Planejado vs Realizado)
+   ============================================================ */
+.plan-cmp-card {
+  background: var(--bg-surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin: 0 16px 4px;
+  overflow: hidden;
+}
+
+.plan-cmp-head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-cmp-col-lbl {
+  font-size: .62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--txt3);
+  min-width: 72px;
+  text-align: right;
+}
+
+.plan-cmp-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-cmp-row:last-child {
+  border-bottom: none;
+  padding-bottom: 10px;
+}
+
+.plan-cmp-lbl {
+  font-size: .82rem;
+  color: var(--txt2);
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.plan-cmp-val {
+  font-size: .88rem;
+  font-weight: 700;
+  min-width: 72px;
+  text-align: right;
+}
+
+.plan-cmp-val.pos { color: var(--teal); }
+.plan-cmp-val.neg { color: var(--danger); }
+
+.plan-cmp-bar-wrap {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: 3px;
+  background: var(--bg-raise);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.plan-cmp-bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .5s cubic-bezier(.4, 0, .2, 1);
+  opacity: .7;
+}
+
+/* Month closed badge */
+.month-closed-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: .8rem;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.month-closed-badge svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+}

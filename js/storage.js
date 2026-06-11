@@ -1,18 +1,20 @@
 /**
  * storage.js — localStorage CRUD + schema migration
- * Schema version: 3
+ * Schema version: 4 (v3→v4 additive, no data wipe)
  */
 
-export const SCHEMA_V = 3;
+export const SCHEMA_V = 4;
 
 const KEYS = {
-  VER:       'fc_ver',
-  DIAG:      'fc_diag',
-  PARAMS:    'fc_params',
-  CONTRACTS: 'fc_contracts',
-  RESERVE:   'fc_reserve',
-  GOALS:     'fc_goals',
-  TX:        (ym) => `fc_tx_${ym}`,
+  VER:        'fc_ver',
+  DIAG:       'fc_diag',
+  PARAMS:     'fc_params',
+  CONTRACTS:  'fc_contracts',
+  RESERVE:    'fc_reserve',
+  GOALS:      'fc_goals',
+  TX:         (ym) => `fc_tx_${ym}`,
+  DEBT_STATE: 'fc_debts_state',
+  SNAP:       (ym) => `fc_snap_${ym}`,
 };
 
 // ── Core ──────────────────────────────────────────────────────
@@ -31,9 +33,14 @@ export function clearAll() {
 // ── Migration ─────────────────────────────────────────────────
 export function migrate() {
   const v = get(KEYS.VER, 0);
-  if (v < SCHEMA_V) {
+  if (v < 3) {
     // breaking change — wipe old data
     clearAll();
+    set(KEYS.VER, SCHEMA_V);
+    return;
+  }
+  // v3→v4: additive, no wipe needed
+  if (v < SCHEMA_V) {
     set(KEYS.VER, SCHEMA_V);
   }
 }
@@ -82,6 +89,61 @@ export const reserve = {
     r.log.push({ ym, delta, label, ts: Date.now() });
     this.set(r);
     return r.saldo;
+  },
+};
+
+// ── Debt State ────────────────────────────────────────────────
+// Tracks current balance of each debt by its id
+export const debtState = {
+  get: () => get(KEYS.DEBT_STATE, {}),
+  set: (obj) => set(KEYS.DEBT_STATE, obj),
+
+  // Lazily initialise balances from diagnosis — only adds debts not yet tracked
+  init(debts) {
+    const current = this.get();
+    let changed = false;
+    debts.forEach(d => {
+      if (!(d.id in current)) {
+        current[d.id] = Number(d.balance) || 0;
+        changed = true;
+      }
+    });
+    if (changed) this.set(current);
+    return current;
+  },
+
+  setBalance(debtId, balance) {
+    const obj = this.get();
+    obj[debtId] = Math.max(0, Number(balance));
+    this.set(obj);
+  },
+
+  // Reduce each debt by its minimum installment (called at month close)
+  payInstallments(debts) {
+    const obj = this.get();
+    debts.forEach(d => {
+      if (d.id in obj) {
+        obj[d.id] = Math.max(0, obj[d.id] - Number(d.installment));
+      }
+    });
+    this.set(obj);
+    return obj;
+  },
+};
+
+// ── Monthly Snapshots ─────────────────────────────────────────
+// Saved at month-end: income, spending, reserve balance, debt state
+export const snapshots = {
+  get: (ym)  => get(KEYS.SNAP(ym), null),
+  set: (ym, data) => set(KEYS.SNAP(ym), { ...data, ym }),
+  getAll() {
+    return Object.keys(localStorage)
+      .filter(k => k.startsWith('fc_snap_'))
+      .map(k => {
+        try { return JSON.parse(localStorage.getItem(k)); } catch { return null; }
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.ym.localeCompare(b.ym));
   },
 };
 

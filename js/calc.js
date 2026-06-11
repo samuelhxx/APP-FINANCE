@@ -40,8 +40,8 @@ export function toReceive(contract, p) {
 
 /** Totaliza fixas + dívidas do diagnóstico */
 export function monthlyCost(diagnosis) {
-  const fixas   = (diagnosis?.fixas   || []).reduce((s,f) => s + Number(f.value), 0);
-  const debts   = (diagnosis?.debts   || []).reduce((s,d) => s + Number(d.installment), 0);
+  const fixas  = (diagnosis?.fixas  || []).reduce((s,f) => s + Number(f.value), 0);
+  const debts  = (diagnosis?.debts  || []).reduce((s,d) => s + Number(d.installment), 0);
   return { fixas, debts, total: fixas + debts };
 }
 
@@ -54,26 +54,143 @@ export function reserveHealth(saldo, custoMensal, metaMeses) {
   return { months, pct, status };
 }
 
-/** Plano de distribuição para mês com renda */
-export function planMonth(income, costTotal, saldoReserva, reserveMeta) {
-  const afterCost = income - costTotal;
-  if (afterCost <= 0) return { toReserve:0, toGoals:0, toFree:0, deficit: Math.abs(afterCost) };
-  const gap        = Math.max(0, reserveMeta - saldoReserva);
-  const toReserve  = Math.min(afterCost, gap);
-  const free       = afterCost - toReserve;
-  const reserveOk  = saldoReserva >= reserveMeta;
-  const toGoals    = reserveOk ? Math.round(free * 0.5) : Math.round(free * 0.15);
-  return { toReserve, toGoals, toFree: free - toGoals, deficit: 0 };
+/** Soma do saldo atual de todas as dívidas */
+export function currentDebtTotal(debts, debtStateMap) {
+  if (!debts || !debts.length) return 0;
+  return debts.reduce((s, d) => s + (debtStateMap[d.id] ?? Number(d.balance)), 0);
 }
 
-/** Contratos fechados com início no mês ym (para exibição) */
+/**
+ * Gera plano mensal com cascata de prioridades.
+ * 1. Fixas  2. Parcelas mínimas  3. Reserva urgente (1 mês)
+ * 4. Aceleração de dívida (Snowball)  5. Reserva completa  6. Livre/objetivos
+ */
+export function generatePlan(diag, debtStateMap, income, reserveSaldo) {
+  const fixas      = diag?.fixas  || [];
+  const debts      = diag?.debts  || [];
+  const metaMonths = diag?.metaMonths || 6;
+
+  const totalFixas   = fixas.reduce((s, f) => s + Number(f.value), 0);
+  const totalDebtMin = debts.reduce((s, d) => s + Number(d.installment), 0);
+  const costTotal    = totalFixas + totalDebtMin;
+  const meta1        = costTotal;
+  const metaFull     = costTotal * metaMonths;
+
+  let remaining = Math.max(0, Number(income));
+  const deficit = Math.max(0, costTotal - remaining);
+
+  // 1. Fixas
+  const toFixas = Math.min(remaining, totalFixas);
+  remaining    -= toFixas;
+
+  // 2. Parcelas mínimas
+  const toDebtMin = Math.min(remaining, totalDebtMin);
+  remaining      -= toDebtMin;
+
+  // 3. Reserva urgente → 1 mês
+  const gap1            = Math.max(0, meta1 - reserveSaldo);
+  const isReserveUrgent = gap1 > 0;
+  const toReserveUrgent = Math.min(remaining, gap1);
+  remaining            -= toReserveUrgent;
+
+  // 4. Snowball — menor saldo primeiro
+  const reserveAfterUrgent = reserveSaldo + toReserveUrgent;
+  const activeDebts = debts
+    .filter(d => (debtStateMap[d.id] ?? Number(d.balance)) > 0)
+    .map(d => ({ ...d, currentBalance: debtStateMap[d.id] ?? Number(d.balance) }))
+    .sort((a, b) => a.currentBalance - b.currentBalance);
+
+  let toDebtExtra = 0;
+  let targetDebt  = null;
+
+  if (activeDebts.length > 0 && reserveAfterUrgent >= meta1 && remaining > 0) {
+    const focus = activeDebts[0];
+    const cap   = Math.min(
+      Math.round(remaining * 0.6),
+      Math.max(0, focus.currentBalance - focus.installment),
+    );
+    toDebtExtra = Math.max(0, cap);
+    remaining  -= toDebtExtra;
+    targetDebt  = focus;
+  }
+
+  // 5. Reserva completa
+  const gapFull       = Math.max(0, metaFull - reserveAfterUrgent);
+  const toReserveFull = Math.min(remaining, gapFull);
+  remaining          -= toReserveFull;
+
+  const toReserveTotal  = toReserveUrgent + toReserveFull;
+  const reserveComplete = reserveAfterUrgent >= metaFull;
+
+  // 6. Livre / objetivos
+  const toGoals = reserveComplete ? Math.round(remaining * 0.5) : Math.round(remaining * 0.15);
+  const toFree  = remaining - toGoals;
+
+  const projDebtMonths    = projectDebtPayoff(debts, debtStateMap, toDebtExtra);
+  const projReserveMonths = toReserveTotal > 0
+    ? Math.ceil(Math.max(0, metaFull - reserveSaldo) / toReserveTotal)
+    : (reserveSaldo >= metaFull ? 0 : null);
+
+  return {
+    income: Number(income),
+    toFixas, fixasList: fixas,
+    toDebtMin, debtMinList: debts,
+    toReserveUrgent, isReserveUrgent,
+    toDebtExtra, targetDebt,
+    toReserveFull, toReserveTotal,
+    toGoals, toFree,
+    deficit,
+    costTotal, metaFull, meta1,
+    reserveSaldo,
+    projDebtMonths,
+    projReserveMonths,
+    reserveComplete,
+    activeDebts,
+  };
+}
+
+/**
+ * Simula quitação de dívidas pelo método Snowball.
+ * Retorna meses estimados (null se > 30 anos).
+ */
+export function projectDebtPayoff(debts, debtStateMap, extraPerMonth) {
+  if (!debts || !debts.length) return 0;
+
+  const balances = debts.map(d => ({
+    installment: Number(d.installment),
+    balance: Math.max(0, debtStateMap[d.id] ?? Number(d.balance)),
+  }));
+
+  if (balances.every(b => b.balance <= 0)) return 0;
+
+  let months = 0;
+  const MAX   = 360;
+
+  while (balances.some(b => b.balance > 0) && months < MAX) {
+    months++;
+    let extra = Math.max(0, extraPerMonth);
+    balances.sort((a, b) => a.balance - b.balance);
+    for (const b of balances) {
+      b.balance = Math.max(0, b.balance - b.installment);
+      if (b.balance > 0 && extra > 0) {
+        const pay = Math.min(extra, b.balance);
+        b.balance -= pay;
+        extra     -= pay;
+      }
+    }
+  }
+
+  return months >= MAX ? null : months;
+}
+
+/** Contratos fechados com início no mês ym */
 export function contractsOfMonth(list, ym) {
   return list.filter(c => c.status === 'closed' && c.startDate?.slice(0,7) === ym);
 }
 
 /**
  * Renda real do mês = soma dos recebimentos registrados naquele mês
- * (em qualquer contrato fechado). Não usa mais a comissão cheia.
+ * em qualquer contrato fechado.
  */
 export function incomeOfMonth(list, _p, ym) {
   return list

@@ -97,6 +97,35 @@ export function barHistory(canvasId, labels, income, spent) {
   });
 }
 
+/** Line chart — debt evolution (descending) */
+export function lineDebt(canvasId, labels, data) {
+  kill(canvasId);
+  const ctx = document.getElementById(canvasId)?.getContext('2d');
+  if (!ctx) return;
+  const grad = ctx.createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0, 'rgba(239,68,68,.2)');
+  grad.addColorStop(1, 'rgba(239,68,68,0)');
+  instances[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{
+      label: 'Dívida total',
+      data,
+      borderColor: C.danger, backgroundColor: grad,
+      fill: true, tension: 0.35,
+      pointRadius: 4, pointBackgroundColor: C.danger,
+      pointBorderColor: '#14171C', pointBorderWidth: 2,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...TIP, callbacks: { label: c => ' ' + Number(c.parsed.y).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) } },
+      },
+      scales: SCALES,
+    },
+  });
+}
+
 /** Donut — categories */
 export function donutCats(canvasId, labels, values) {
   kill(canvasId);
